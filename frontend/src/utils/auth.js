@@ -1,12 +1,13 @@
 // ===============================
-// DEFAULT HARDCODED ADMIN
+
+// DEFAULT ADMIN
 // ===============================
 const DEFAULT_ADMIN = {
   username: "admin",
   email: "admin@gmail.com",
   password: "admin123",
   role: "ADMIN",
-  photo: ""
+  photo: "",
 };
 
 // ===============================
@@ -15,7 +16,7 @@ const DEFAULT_ADMIN = {
 export const initializeAdmin = () => {
   const users = JSON.parse(localStorage.getItem("allUsers")) || [];
 
-  const adminExists = users.find(u => u.role === "ADMIN");
+  const adminExists = users.find((u) => u.role === "ADMIN");
 
   if (!adminExists) {
     users.push(DEFAULT_ADMIN);
@@ -24,18 +25,19 @@ export const initializeAdmin = () => {
 };
 
 // ===============================
-// LOGGED USER SAVE / GET
+
+// SESSION MANAGEMENT
 // ===============================
 export const saveUser = (user) => {
-  localStorage.setItem("loggedUser", JSON.stringify(user));
+  localStorage.setItem("user", JSON.stringify(user)); // 🔥 FIXED KEY
 };
 
 export const getUser = () => {
-  return JSON.parse(localStorage.getItem("loggedUser"));
+  return JSON.parse(localStorage.getItem("user")); // 🔥 FIXED KEY
 };
 
 export const logout = () => {
-  localStorage.removeItem("loggedUser");
+  localStorage.removeItem("user");
 };
 
 // ===============================
@@ -56,15 +58,16 @@ export const saveRequest = (request) => {
   const requests = JSON.parse(localStorage.getItem("requests")) || [];
 
   const alreadyRequested = requests.find(
-    r => r.username === request.username
+
+    (r) => r.username === request.username
   );
 
   if (alreadyRequested) {
-    alert("You already sent request.");
+    alert("Request already sent.");
     return;
   }
 
-  requests.push(request);
+  requests.push({ ...request, status: "PENDING" }); // 🔥 add status
   localStorage.setItem("requests", JSON.stringify(requests));
 };
 
@@ -73,8 +76,9 @@ export const getRequests = () => {
 };
 
 export const removeRequest = (username) => {
-  const requests = getRequests().filter(
-    r => r.username !== username
+
+  const updated = getRequests().filter(
+    (r) => r.username !== username
   );
-  localStorage.setItem("requests", JSON.stringify(requests));
+  localStorage.setItem("requests", JSON.stringify(updated));
 };

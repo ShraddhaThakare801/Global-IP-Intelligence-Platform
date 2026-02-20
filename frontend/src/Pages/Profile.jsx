@@ -2,96 +2,176 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
+import { getUser, logout } from "../utils/auth";
+
 const Profile = () => {
   const navigate = useNavigate();
+  const loggedUser = getUser();
 
-  const [user, setUser] = useState(() => {
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+  if (!loggedUser) {
     return (
-      savedUser || {
-        name: "",
-        email: "",
-        phone: "",
-        dob: "",
-        gender: "",
-        profilePic: "",
-        role: "",
-        profileComplete: false,
-      }
+      <div className="flex items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold text-red-500">
+          No user logged in
+        </h2>
+      </div>
     );
-  });
+  }
 
-  const [editing, setEditing] = useState(() => !user.profileComplete);
+  const [user, setUser] = useState(loggedUser);
+  const [editing, setEditing] = useState(false);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleImage = (e) => {
+  // ✅ Profile Photo Upload
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
+
+    if (!file) return;
+
     const reader = new FileReader();
-    reader.onloadend = () =>
-      setUser({ ...user, profilePic: reader.result });
-    if (file) reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      setUser({ ...user, photo: reader.result });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = () => {
-    if (!user.name || !user.email || !user.phone || !user.role) {
-      toast.error("Please fill all required fields ⚠️");
-      return;
-    }
+    const allUsers =
+      JSON.parse(localStorage.getItem("allUsers")) || [];
 
-    const updatedUser = { ...user, profileComplete: true };
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    const updatedUsers = allUsers.map((u) =>
+      u.username === user.username ? { ...u, ...user } : u
+    );
+
+    localStorage.setItem(
+      "allUsers",
+      JSON.stringify(updatedUsers)
+    );
+
+    localStorage.setItem(
+      "loggedUser",
+      JSON.stringify(user)
+    );
+
+    toast.success("Profile updated successfully 🚀");
     setEditing(false);
-
-    toast.success("Profile Updated Successfully 🚀");
-
-    if (updatedUser.role === "USER") navigate("/user");
-    if (updatedUser.role === "ANALYST") navigate("/analyst");
-    if (updatedUser.role === "ADMIN") navigate("/admin");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logout();
     toast.info("Logged out successfully 👋");
     navigate("/login");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 flex items-center justify-center px-4 sm:px-6 py-16">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-16">
+      <div className="w-full max-w-3xl bg-white p-10 rounded-3xl shadow-xl">
 
-      <div className="w-full max-w-4xl bg-white rounded-3xl 
-        shadow-[0_40px_120px_rgba(0,0,0,0.12)] 
-        hover:shadow-[0_60px_140px_rgba(0,0,0,0.18)]
-        transition-all duration-500 border border-slate-200">
+        <h2 className="text-3xl font-bold text-center mb-6">
+          Profile
+        </h2>
 
-        <div className="p-6 sm:p-10 md:p-14">
+        {/* ✅ Profile Picture */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <img
+              src={
+                user.photo ||
+                "https://ui-avatars.com/api/?name=" +
+                  user.username
+              }
+              alt="profile"
+              className="w-28 h-28 rounded-full object-cover border-4 border-indigo-500 shadow-md"
+            />
 
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight">
-              Professional Profile
-            </h2>
-            <p className="text-slate-500 mt-2 text-sm sm:text-base">
-              Manage your personal & professional details
-            </p>
+            {editing && (
+              <label className="absolute bottom-0 right-0 bg-indigo-600 text-white px-3 py-1 text-xs rounded-full cursor-pointer hover:bg-indigo-700 transition">
+                Change
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  hidden
+                />
+              </label>
+            )}
           </div>
+        </div>
 
-          {/* Profile Image */}
-          <div className="flex justify-center mb-10">
-            <div className="relative group">
-              <img
-                src={user.profilePic || "https://via.placeholder.com/150"}
-                alt="profile"
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover 
-                  border-4 border-indigo-500 
-                  shadow-xl 
-                  group-hover:scale-105 
-                  group-hover:shadow-2xl 
-                  transition-all duration-500"
-              />
+        {editing ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <Input
+              name="username"
+              value={user.username}
+              disabled
+            />
+
+            <Input
+              name="email"
+              value={user.email}
+              onChange={handleChange}
+            />
+
+            <Input
+              name="phone"
+              value={user.phone || ""}
+              onChange={handleChange}
+              placeholder="Phone"
+            />
+
+            <Input
+              name="dob"
+              type="date"
+              value={user.dob || ""}
+              onChange={handleChange}
+            />
+
+            <Input
+              name="gender"
+              value={user.gender || ""}
+              onChange={handleChange}
+              placeholder="Gender"
+            />
+
+            <Input
+              name="role"
+              value={user.role}
+              disabled
+            />
+
+            <button
+              onClick={handleSave}
+              className="md:col-span-2 bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition"
+            >
+              Save Changes
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <Info label="Username" value={user.username} />
+            <Info label="Email" value={user.email} />
+            <Info label="Phone" value={user.phone || "N/A"} />
+            <Info label="Role" value={user.role} />
+
+            <div className="md:col-span-2 flex gap-4 mt-6">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition"
+              >
+                Edit Profile
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex-1 border border-red-400 text-red-600 py-3 rounded-xl hover:bg-red-50 transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
 
@@ -173,26 +253,22 @@ const Profile = () => {
   );
 };
 
-const Input = ({ ...props }) => (
+
+const Input = (props) => (
   <input
     {...props}
-    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white shadow-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 hover:shadow-md outline-none transition-all duration-300"
+    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
   />
 );
 
-const Select = ({ children, ...props }) => (
-  <select
-    {...props}
-    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white shadow-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 hover:shadow-md outline-none transition-all duration-300"
-  >
-    {children}
-  </select>
-);
-
-const InfoCard = ({ label, value }) => (
-  <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-    <strong className="block text-slate-500 text-sm mb-1">{label}</strong>
-    <p className="text-slate-800 font-medium">{value}</p>
+const Info = ({ label, value }) => (
+  <div className="bg-gray-50 p-4 rounded-xl">
+    <strong className="block text-gray-500 text-sm">
+      {label}
+    </strong>
+    <p className="text-gray-800 font-medium">
+      {value}
+    </p>
   </div>
 );
 
