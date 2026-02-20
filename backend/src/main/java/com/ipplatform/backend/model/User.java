@@ -37,6 +37,10 @@ public class User {
     @Column(name = "role")
     private List<String> roles;
 
+    // ✅ NEW FIELD — Analyst approval mechanism
+    @Column(nullable = false)
+    private boolean approved = true;
+
     // ── Constructors ─────────────────────────────────────────────────────────────
 
     public User() {}
@@ -47,6 +51,7 @@ public class User {
         this.password = password;
         this.roles = roles;
         this.provider = "local";
+        this.approved = true;  // default for USER
     }
 
     // For OAuth (Google) users
@@ -58,6 +63,7 @@ public class User {
         this.provider = provider;
         this.providerId = providerId;
         this.roles = roles;
+        this.approved = true;  // OAuth users auto-approved
     }
 
     // ── Getters & Setters ────────────────────────────────────────────────────────
@@ -84,4 +90,8 @@ public class User {
 
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
+
+    // ✅ Approved Getter/Setter
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
 }
