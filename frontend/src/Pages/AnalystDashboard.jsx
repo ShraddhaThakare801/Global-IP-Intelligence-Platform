@@ -1,87 +1,176 @@
-import {
-  getUser,
-  getAllUsers,
-  saveAllUsers,
-  getRequests,
-  removeRequest,
-} from "../utils/auth";
-import { toast } from "react-toastify";
- 
-export default function AdminDashboard() {
+import { useState, useMemo } from "react";
+import { getUser } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
+
+export default function AnalystDashboard() {
   const user = getUser();
- 
-  if (!user || user.role !== "ADMIN") {
+  const navigate = useNavigate();
+
+  if (!user || user.role !== "ANALYST") {
     return (
-      <h2 className="text-center mt-20 text-2xl font-semibold text-indigo-600">
-        Access Denied
-      </h2>
+      <div className="flex items-center justify-center min-h-screen">
+        <h2 className="text-2xl font-semibold text-red-500">
+          Access Denied
+        </h2>
+      </div>
     );
   }
- 
-  const users = getAllUsers();
-  const requests = getRequests();
- 
-  const approveRequest = (username) => {
-    const updatedUsers = users.map((u) =>
-      u.username === username ? { ...u, role: "ANALYST" } : u
+
+  // Dummy filings data
+  const [filings] = useState([
+    { id: 1, type: "Patent", status: "Active", country: "US" },
+    { id: 2, type: "Trademark", status: "Pending", country: "India" },
+    { id: 3, type: "Patent", status: "Expired", country: "Germany" },
+    { id: 4, type: "Design", status: "Active", country: "Japan" },
+  ]);
+
+  const [search, setSearch] = useState("");
+
+  const filteredFilings = useMemo(() => {
+    return filings.filter(
+      (f) =>
+        f.type.toLowerCase().includes(search.toLowerCase()) ||
+        f.country.toLowerCase().includes(search.toLowerCase())
     );
- 
-    saveAllUsers(updatedUsers);
-    removeRequest(username);
- 
-    toast.success("User promoted to ANALYST 🎉");
-    setTimeout(() => window.location.reload(), 1000);
+  }, [filings, search]);
+
+  const stats = {
+    total: filings.length,
+    active: filings.filter((f) => f.status === "Active").length,
+    pending: filings.filter((f) => f.status === "Pending").length,
+    expired: filings.filter((f) => f.status === "Expired").length,
   };
- 
-  const revokeAccess = (username) => {
-    const updatedUsers = users.map((u) =>
-      u.username === username ? { ...u, role: "USER" } : u
+
+  const exportData = () => {
+    const blob = new Blob(
+      [JSON.stringify(filings, null, 2)],
+      { type: "application/json" }
     );
- 
-    saveAllUsers(updatedUsers);
- 
-    toast.error(`Access revoked for ${username}`);
-    setTimeout(() => window.location.reload(), 1000);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "filings.json";
+    a.click();
   };
- 
-  const filings = [
-    { id: 1, type: "Patent", status: "Expiring" },
-    { id: 2, type: "Trademark", status: "Active" },
-    { id: 3, type: "Patent", status: "Expiring" },
-  ];
- 
-  const auditLog = [
-    "Feb 15 – ✅ User Shraddha promoted to Analyst",
-    "Feb 14 – ❌ Access revoked for Rahul",
-    "Feb 13 – 📌 Admin Sindhu approved 2 requests",
-  ];
- 
-  const topUsers = [
-    { name: "Shraddha", filings: 25 },
-    { name: "Rahul", filings: 18 },
-    { name: "Meera", filings: 15 },
-  ];
- 
-  const feedback = [
-    { from: "User A", message: "Add dark mode option" },
-    { from: "Analyst B", message: "Export filings as Excel" },
-  ];
- 
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 px-4 sm:px-10 py-16">
-      
-      <div className="mb-14">
-        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
-          Admin Dashboard –{" "}
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            {user.username}
-          </span>{" "}
-          🔑
-        </h1>
+    <div className="min-h-screen bg-gray-100 p-6 md:p-10">
+
+      {/* HEADER WITH PROFILE BUTTON */}
+      <div className="mb-10 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold">
+            Analyst Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Welcome, {user.username}. You have advanced IP analysis access.
+          </p>
+        </div>
+
+        <button
+          onClick={() => navigate("/profile")}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition"
+        >
+          View Profile
+        </button>
       </div>
 
-      {/* Rest of your styled sections remain SAME */}
-      
+      {/* STATISTICS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <StatCard label="Total Filings" value={stats.total} />
+        <StatCard label="Active" value={stats.active} />
+        <StatCard label="Pending" value={stats.pending} />
+        <StatCard label="Expired" value={stats.expired} />
+      </div>
+
+      {/* SEARCH + EXPORT */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <input
+          type="text"
+          placeholder="Search by type or country..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full md:w-1/2 p-3 border rounded-xl shadow-sm"
+        />
+
+        <button
+          onClick={exportData}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition"
+        >
+          Export Data
+        </button>
+      </div>
+
+      {/* FILINGS TABLE */}
+      <div className="bg-white rounded-2xl shadow p-6 overflow-x-auto">
+        <h2 className="text-xl font-semibold mb-6">
+          IP Filings
+        </h2>
+
+        <table className="min-w-full">
+          <thead>
+            <tr className="text-left border-b">
+              <th className="py-3">Type</th>
+              <th className="py-3">Status</th>
+              <th className="py-3">Country</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredFilings.map((f) => (
+              <tr key={f.id} className="border-b hover:bg-gray-50 transition">
+                <td className="py-3">{f.type}</td>
+                <td className="py-3">
+                  <StatusBadge status={f.status} />
+                </td>
+                <td className="py-3">{f.country}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {filteredFilings.length === 0 && (
+          <p className="text-gray-500 mt-4">
+            No matching filings found.
+          </p>
+        )}
+      </div>
+
+      {/* NOTIFICATIONS */}
+      <div className="mt-12 bg-white rounded-2xl shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">
+          Notifications
+        </h2>
+        <ul className="space-y-2 text-gray-600">
+          <li>📌 2 patents expiring this month</li>
+          <li>📊 5 new trademark filings added</li>
+          <li>🔔 Weekly analytics report ready</li>
+        </ul>
+      </div>
+
     </div>
   );
 }
+
+/* COMPONENTS */
+
+const StatCard = ({ label, value }) => (
+  <div className="bg-indigo-600 text-white p-6 rounded-2xl shadow text-center">
+    <p className="text-sm opacity-80">{label}</p>
+    <p className="text-2xl font-bold mt-2">{value}</p>
+  </div>
+);
+
+const StatusBadge = ({ status }) => {
+  const color =
+    status === "Active"
+      ? "bg-green-100 text-green-700"
+      : status === "Pending"
+      ? "bg-yellow-100 text-yellow-700"
+      : "bg-red-100 text-red-700";
+
+  return (
+    <span className={`px-3 py-1 rounded-full text-sm ${color}`}>
+      {status}
+    </span>
+  );
+};
