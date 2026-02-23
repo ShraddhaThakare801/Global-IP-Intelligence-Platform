@@ -1,129 +1,130 @@
 import { getUser } from "../utils/auth";
-
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function UserDashboard() {
   const user = getUser();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
   if (!user || user.role !== "USER") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <h2 className="text-2xl font-semibold text-red-500">
-          Access Denied
-        </h2>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Access Denied
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 px-4 sm:px-10 py-16">
-
-      {/* Welcome Banner */}
-
-      <div className="mb-14 flex justify-between items-center flex-wrap gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#111827] text-white px-6 md:px-12 py-16">
+      {/* HEADER */}
+      <div className="mb-16 flex justify-between items-center flex-wrap gap-6">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
-            Welcome,{" "}
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              {user.username}
-            </span> 👋
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+            Welcome, {user.username} 👋
           </h1>
-          <p className="text-slate-500 mt-3 text-sm sm:text-base max-w-xl">
-            Explore your intellectual property insights with precision and clarity.
+          <p className="text-gray-400 mt-3 max-w-xl">
+            Explore your intellectual property insights with clarity and
+            confidence.
           </p>
         </div>
 
-        {/* 🔥 Profile Button (Now Navigates) */}
         <button
           onClick={() => navigate("/profile")}
-          className="px-8 py-3 rounded-2xl font-medium text-white
-          bg-gradient-to-r from-indigo-600 to-purple-600
-          shadow-[0_10px_30px_rgba(79,70,229,0.4)]
-          hover:shadow-[0_15px_40px_rgba(79,70,229,0.5)]
-          hover:-translate-y-1
-          active:scale-95
-          transition-all duration-300"
+          className="px-8 py-3 rounded-xl font-medium text-white
+          bg-gradient-to-r from-indigo-500 to-purple-600
+          hover:scale-105 transition transform shadow-lg"
         >
           View Profile
         </button>
       </div>
 
-      {/* Search Section */}
+      {/* SEARCH SECTION */}
       <Section title="Search IP">
-        <input
-          type="text"
-          placeholder="Search patent..."
-          className="w-full px-5 py-4 rounded-2xl border border-slate-200
-          bg-white shadow-inner
-          focus:ring-2 focus:ring-indigo-500
-          focus:border-indigo-500
-          outline-none transition-all duration-300 mb-6"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search patents, trademarks..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 rounded-xl px-6 py-4
+            focus:outline-none focus:ring-2 focus:ring-indigo-500
+            backdrop-blur-md transition"
+          />
 
+          <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
+            🔍
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="flex flex-wrap gap-4 mt-6 text-sm">
           <Tag text="Patent" />
           <Tag text="Trademark" />
           <Tag text="Copyright" />
         </div>
       </Section>
 
-      {/* Saved Searches */}
+      {/* SAVED SEARCHES */}
       <Section title="Saved Searches">
-        <ul className="space-y-3 text-slate-600">
-          <li className="hover:text-indigo-600 hover:translate-x-1 transition-all duration-300 cursor-pointer">
+        <ul className="space-y-4 text-gray-300">
+          <li className="hover:text-indigo-400 hover:translate-x-1 transition cursor-pointer">
             Patent filings in 2025
           </li>
-          <li className="hover:text-indigo-600 hover:translate-x-1 transition-all duration-300 cursor-pointer">
+          <li className="hover:text-indigo-400 hover:translate-x-1 transition cursor-pointer">
             Trademark disputes in India
           </li>
         </ul>
       </Section>
 
-      {/* Recent Activity */}
+      {/* RECENT ACTIVITY */}
       <Section title="Recent Activity">
-        <ul className="space-y-4 text-slate-600">
-          <li className="hover:text-indigo-600 transition-all duration-300">
+        <ul className="space-y-4 text-gray-300">
+          <li className="hover:text-indigo-400 transition">
             🔍 You searched for Filing X yesterday
           </li>
-          <li className="hover:text-indigo-600 transition-all duration-300">
+          <li className="hover:text-indigo-400 transition">
             📌 You pinned Filing Y last week
           </li>
         </ul>
       </Section>
 
-      {/* Achievements */}
+      {/* ACHIEVEMENTS */}
       <Section title="Achievements">
         <div className="flex flex-wrap gap-8">
           <Achievement text="First Search Completed" />
           <Achievement text="10 Filings Tracked" />
         </div>
       </Section>
-
     </div>
   );
 }
 
-/* ---------- Reusable Components ---------- */
+/* ---------- Components ---------- */
 
 const Section = ({ title, children }) => (
-  <div className="bg-white p-8 rounded-3xl shadow-lg mb-14 border border-slate-100 transition hover:shadow-xl">
-    <h3 className="text-xl font-semibold text-slate-900 mb-6">
-      {title}
-    </h3>
+  <div className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-8 mb-14 shadow-xl hover:shadow-2xl transition">
+    <h3 className="text-xl font-semibold text-indigo-400 mb-6">{title}</h3>
     {children}
   </div>
 );
 
 const Tag = ({ text }) => (
-  <span className="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-full font-medium cursor-pointer hover:bg-indigo-600 hover:text-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+  <span
+    className="px-5 py-2 bg-white/10 border border-white/20 rounded-full
+  text-gray-300 cursor-pointer
+  hover:bg-indigo-500 hover:text-white hover:border-indigo-500
+  hover:scale-105 transition transform"
+  >
     {text}
   </span>
 );
 
 const Achievement = ({ text }) => (
-  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-2xl text-center shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+  <div
+    className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white
+  p-6 rounded-2xl text-center shadow-lg
+  hover:scale-105 transition transform"
+  >
     🏅
     <p className="text-sm mt-3 font-medium">{text}</p>
   </div>
