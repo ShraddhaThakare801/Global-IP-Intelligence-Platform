@@ -45,12 +45,8 @@ export default function AdminDashboard() {
 
   const filteredUsers = useMemo(() => {
     return users
-      .filter((u) =>
-        u.username.toLowerCase().includes(search.toLowerCase())
-      )
-      .filter((u) =>
-        roleFilter === "ALL" ? true : u.role === roleFilter
-      );
+      .filter((u) => u.username.toLowerCase().includes(search.toLowerCase()))
+      .filter((u) => (roleFilter === "ALL" ? true : u.role === roleFilter));
   }, [users, search, roleFilter]);
 
   const filteredRequests = useMemo(() => {
@@ -113,9 +109,7 @@ export default function AdminDashboard() {
   if (!user || user.role !== "ADMIN") {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <h2 className="text-2xl font-semibold text-red-500">
-          Access Denied
-        </h2>
+        <h2 className="text-2xl font-semibold text-red-500">Access Denied</h2>
       </div>
     );
   }
@@ -205,9 +199,7 @@ export default function AdminDashboard() {
           >
             <div>
               <p className="font-semibold">{u.username}</p>
-              <p className="text-sm text-gray-500">
-                Role: {u.role}
-              </p>
+              <p className="text-sm text-gray-500">Role: {u.role}</p>
             </div>
 
             {u.username !== "admin" && (
