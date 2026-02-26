@@ -35,15 +35,15 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 🔥 CORS Configuration
+    // ✅ FIXED CORS CONFIGURATION
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(List.of("*"));  // 🔥 FIX
+        configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -53,13 +53,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // 🔥 IMPORTANT
+            .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .authorizeHttpRequests(auth -> auth
 
-                // ── Public ─────────────────────────────────────
+                // ── Public Endpoints ─────────────────────────
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/refresh").permitAll()
@@ -74,26 +74,34 @@ public class SecurityConfig {
 
                 .requestMatchers("/actuator/health").permitAll()
 
-                // ── ROLE_USER ─────────────────────────────────
+                // 🔥 Search API PUBLIC (for development)
+                .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()
+
+                // ── ROLE_USER ────────────────────────────────
                 .requestMatchers(HttpMethod.POST, "/api/user/logout").hasRole("USER")
                 .requestMatchers(HttpMethod.POST, "/api/user/change-password").hasRole("USER")
                 .requestMatchers(HttpMethod.GET,  "/api/user/me").hasRole("USER")
-                .requestMatchers(HttpMethod.GET,  "/api/search/**").hasAnyRole("USER", "ANALYST", "ADMIN")
-                .requestMatchers(HttpMethod.GET,  "/api/ip-assets/**").hasAnyRole("USER", "ANALYST", "ADMIN")
+                .requestMatchers(HttpMethod.GET,  "/api/ip-assets/**")
+                    .hasAnyRole("USER", "ANALYST", "ADMIN")
 
-                // ── ROLE_ANALYST ───────────────────────────────
+                // ── ROLE_ANALYST ─────────────────────────────
                 .requestMatchers(HttpMethod.POST, "/api/analyst/logout").hasRole("ANALYST")
                 .requestMatchers(HttpMethod.GET,  "/api/analyst/me").hasRole("ANALYST")
-                .requestMatchers("/api/subscriptions/**").hasAnyRole("ANALYST", "ADMIN")
-                .requestMatchers("/api/notifications/**").hasAnyRole("ANALYST", "ADMIN")
-                .requestMatchers("/api/landscape/**").hasAnyRole("ANALYST", "ADMIN")
-                .requestMatchers("/api/filings/**").hasAnyRole("ANALYST", "ADMIN")
+                .requestMatchers("/api/subscriptions/**")
+                    .hasAnyRole("ANALYST", "ADMIN")
+                .requestMatchers("/api/notifications/**")
+                    .hasAnyRole("ANALYST", "ADMIN")
+                .requestMatchers("/api/landscape/**")
+                    .hasAnyRole("ANALYST", "ADMIN")
+                .requestMatchers("/api/filings/**")
+                    .hasAnyRole("ANALYST", "ADMIN")
 
-                // ── ROLE_ADMIN ────────────────────────────────
+                // ── ROLE_ADMIN ───────────────────────────────
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
             )
+
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
