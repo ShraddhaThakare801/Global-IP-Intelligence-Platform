@@ -7,6 +7,7 @@ import {
   User,
   Bell,
 } from "lucide-react";
+import { Activity } from "react";
 
 export default function UserSidebar() {
   const links = [
@@ -17,7 +18,11 @@ export default function UserSidebar() {
 
     /* NEW SUBSCRIPTIONS SECTION */
 
-    { path: "/user/subscriptions", label: "Subscriptions", icon: Bell },
+    {
+      path: "/user/status-dashboard",
+      label: "Status Dashboard",
+      icon: Bell,
+    },
 
     { path: "/user/profile", label: "Profile", icon: User },
   ];
