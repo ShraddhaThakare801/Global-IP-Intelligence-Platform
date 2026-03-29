@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { BACKEND_URL } from "../config";
 
-export default function Login() {
+const GOOGLE_CLIENT_ID =
+  "268780669175-b9ai4tt1rcing8mejqes71o702ull04k.apps.googleusercontent.com";
+
+// ── Inner component so useGoogleLogin is inside GoogleOAuthProvider ──────────
+function LoginInner() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -16,14 +20,11 @@ export default function Login() {
   });
 
   // Google login handler
-  const handleGoogleSuccess = async (credentialResponse) => {
-    if (!credentialResponse || !credentialResponse.credential) {
-      toast.error("Google login failed: No credential received");
+  const handleGoogleSuccess = async (tokenResponse) => {
+    if (!tokenResponse || !tokenResponse.access_token) {
+      toast.error("Google login failed: No token received");
       return;
     }
-
-    const decoded = jwtDecode(credentialResponse.credential);
-    console.log("Google user:", decoded);
 
     try {
       const res = await axios.post("http://localhost:8081/api/auth/google", {
@@ -34,6 +35,7 @@ export default function Login() {
       const cleanRole = data.role ? data.role.replace("ROLE_", "") : data.userType;
 
       localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("role", cleanRole);
 
       toast.success("Google login successful 🚀");
@@ -45,7 +47,7 @@ export default function Login() {
       }, 800);
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Invalid credentials");
+      toast.error(err.response?.data?.error || "Google login failed");
     }
   };
 
@@ -151,16 +153,14 @@ export default function Login() {
         <div className="divider">OR</div>
 
         {/* Custom Google Button */}
-        <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
-          <button onClick={() => googleLogin()} className="google-btn">
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              className="google-icon"
-            />
-            <span>Continue with Google</span>
-          </button>
-        </GoogleOAuthProvider>
+        <button onClick={() => googleLogin()} className="google-btn">
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            alt="Google"
+            className="google-icon"
+          />
+          <span>Continue with Google</span>
+        </button>
 
         {/* Register Link */}
         <button
@@ -394,5 +394,14 @@ export default function Login() {
 
       `}</style>
     </div>
+  );
+}
+
+// Wrap with GoogleOAuthProvider so useGoogleLogin hook has context
+export default function Login() {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <LoginInner />
+    </GoogleOAuthProvider>
   );
 }
