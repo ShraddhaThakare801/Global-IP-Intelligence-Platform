@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Repository
 public interface IpAssetRepository extends JpaRepository<IpAsset, Long> {
 
@@ -23,4 +26,10 @@ public interface IpAssetRepository extends JpaRepository<IpAsset, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    long countByStatus(String status);
+
+    List<IpAsset> findByExpiryDateBetween(LocalDate start, LocalDate end);
+
+    List<IpAsset> findByRenewalDateBetween(LocalDate start, LocalDate end);
 }

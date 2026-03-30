@@ -1,6 +1,7 @@
 package com.ipplatform.backend.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "ip_assets", indexes = {
@@ -29,6 +30,21 @@ public class IpAsset {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "filing_date")
+    private LocalDate filingDate;
+
+    @Column(name = "grant_date")
+    private LocalDate grantDate;
+
+    @Column(name = "renewal_date")
+    private LocalDate renewalDate;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String legalStatusCode;
 
     public IpAsset() {
     }
@@ -79,5 +95,45 @@ public class IpAsset {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalDate getFilingDate() {
+        return filingDate;
+    }
+
+    public void setFilingDate(LocalDate filingDate) {
+        this.filingDate = filingDate;
+    }
+
+    public LocalDate getGrantDate() {
+        return grantDate;
+    }
+
+    public void setGrantDate(LocalDate grantDate) {
+        this.grantDate = grantDate;
+    }
+
+    public LocalDate getRenewalDate() {
+        return renewalDate;
+    }
+
+    public void setRenewalDate(LocalDate renewalDate) {
+        this.renewalDate = renewalDate;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDate expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public String getLegalStatusCode() {
+        return legalStatusCode;
+    }
+
+    public void setLegalStatusCode(String legalStatusCode) {
+        this.legalStatusCode = legalStatusCode;
     }
 }

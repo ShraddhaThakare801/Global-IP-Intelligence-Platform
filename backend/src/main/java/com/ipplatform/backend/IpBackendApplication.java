@@ -18,7 +18,7 @@ public class IpBackendApplication {
                 "./", // mvnw clean spring-boot:run from /backend
                 "Global-IP-Intelligence-Platform/backend" // IDE run from /internship_ISB
         };
-
+       
         Dotenv dotenv = null;
         for (String dir : candidates) {
             if (new File(dir, ".env").exists()) {

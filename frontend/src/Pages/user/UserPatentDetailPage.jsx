@@ -1,42 +1,111 @@
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import api from "../../services/api";
 
-import { useLocation, useNavigate } from "react-router-dom";
-
-export default function UserPatentDetailPage(){
+export default function UserPatentDetailPage() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { lensId } = useParams();
 
   const patent = location.state?.patent;
 
-  if(!patent){
-    return(
+  const [subscribed, setSubscribed] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
+
+  // Check subscription status on mount
+  useEffect(() => {
+    if (!lensId) return;
+    api.get(`/api/subscriptions/${lensId}/status`)
+      .then(res => setSubscribed(res.data.subscribed))
+      .catch(() => {}); // silently ignore if token missing / error
+  }, [lensId]);
+
+  const handleSubscribe = async () => {
+    setSubLoading(true);
+    try {
+      await api.post(`/api/subscriptions/${lensId}`, {
+        title: patent?.title || "",
+        jurisdiction: patent?.jurisdiction || "",
+        datePub: patent?.datePublished || "",
+      });
+      setSubscribed(true);
+      toast.success("Subscribed successfully!");
+    } catch (err) {
+      if (err.response?.status === 409) {
+        toast.info("Already subscribed to this patent.");
+        setSubscribed(true);
+      } else {
+        toast.error("Failed to subscribe. Please try again.");
+      }
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    setSubLoading(true);
+    try {
+      await api.delete(`/api/subscriptions/${lensId}`);
+      setSubscribed(false);
+      toast.success("Unsubscribed successfully!");
+    } catch {
+      toast.error("Failed to unsubscribe. Please try again.");
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  if (!patent) {
+    return (
       <div className="text-red-400 p-6">
-        Patent data not found.
+        Patent data not found.{" "}
+        <button onClick={() => navigate(-1)} className="text-indigo-400 underline">Go back</button>
       </div>
     );
   }
 
-  return(
+  return (
 
     <div className="space-y-8 text-white">
 
-      {/* BACK BUTTON */}
+      {/* BACK + SUBSCRIBE ROW */}
 
-      <button
-        onClick={()=>navigate(-1)}
-        className="
-        bg-indigo-600
-        px-5
-        py-2
-        rounded-lg
-        hover:bg-indigo-700
-        shadow
-        hover:shadow-indigo-500/40
-        transition
-        "
-      >
-        ← Back
-      </button>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+
+        <button
+          onClick={() => navigate(-1)}
+          className="
+          bg-indigo-600
+          px-5
+          py-2
+          rounded-lg
+          hover:bg-indigo-700
+          shadow
+          hover:shadow-indigo-500/40
+          transition
+          "
+        >
+          ← Back
+        </button>
+
+        {/* Subscribe / Unsubscribe */}
+        <button
+          onClick={subscribed ? handleUnsubscribe : handleSubscribe}
+          disabled={subLoading}
+          className={`
+            px-6 py-2 rounded-lg font-semibold text-sm shadow transition disabled:opacity-50
+            ${subscribed
+              ? "bg-red-600 hover:bg-red-700 hover:shadow-red-500/40"
+              : "bg-green-600 hover:bg-green-700 hover:shadow-green-500/40"
+            }
+          `}
+        >
+          {subLoading ? "…" : subscribed ? "🔔 Unsubscribe" : "🔔 Subscribe"}
+        </button>
+
+      </div>
 
 
       {/* TITLE CARD */}

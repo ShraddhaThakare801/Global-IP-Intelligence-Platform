@@ -11,8 +11,17 @@ import Profile from "./Pages/Profile";
 import LandingPage from "./Pages/LandingPage";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
-import UserDashboard from "./Pages/UserDashboard";
-import AdminDashboard from "./Pages/AdminDashboard";
+// import AdminDashboard from "./Pages/AdminDashboard";
+
+
+// ✅ Admin 
+import AdminLayout from "./Pages/Admin/AdminLayout";
+import AdminDashboardPage from "./Pages/Admin/AdminDashboardPage";
+import AdminApprovalsPage from "./Pages/Admin/AdminApprovalsPage";
+import AdminUsersPage from "./Pages/Admin/AdminUsersPage";
+import AdminApiHealthPage from "./Pages/Admin/AdminApiHealthPage";
+import AdminLogsPage from "./Pages/Admin/AdminLogsPage";
+
 
 /* 🔥 ANALYST STRUCTURE */
 
@@ -21,31 +30,29 @@ import AnalystDashboardPage from "./Pages/Analyst/AnalystDashboardPage";
 import AnalystSearchPage from "./Pages/Analyst/AnalystSearchPage";
 import AnalystVisualizationPage from "./Pages/Analyst/AnalystVisualizationPage";
 import AnalystExportPage from "./Pages/Analyst/AnalystExportPage";
+import AnalystAssetsPage from "./Pages/Analyst/AnalystAssetsPage";
 
-/* 🔥 NEW DETAIL PAGE */
 import PatentDetailPage from "./Pages/Analyst/PatentDetailPage";
 
+import UserLayout from "./Pages/user/UserLayout";
+import UserDashboardPage from "./Pages/user/UserDashboardPage";
+import UserSearchPage from "./Pages/user/UserSearchPage";
+import UserWatchlistPage from "./Pages/user/UserWatchlistPage";
+import UserHistoryPage from "./Pages/user/UserHistoryPage";
+import UserPatentDetailPage from "./Pages/user/UserPatentDetailPage";
+import UserStatusDashboard from "./Pages/user/UserStatusDashboard";
+import UserSubscriptionsPage from "./Pages/user/UserSubscriptionsPage";
 
-
-import UserLayout from "./Pages/User/UserLayout";
-import UserDashboardPage from "./Pages/User/UserDashboardPage";
-import UserSearchPage from "./Pages/User/UserSearchPage";
-import UserWatchlistPage from "./Pages/User/UserWatchlistPage";
-import UserHistoryPage from "./Pages/User/UserHistoryPage";
-import UserPatentDetailPage from "./Pages/User/UserPatentDetailPage"
 export default function App() {
-
   useEffect(() => {
     initializeAdmin();
   }, []);
 
   return (
     <>
-
       {/* ROUTES */}
 
       <Routes>
-
         <Route path="/" element={<LandingPage />} />
 
         <Route path="/profile" element={<Profile />} />
@@ -54,14 +61,19 @@ export default function App() {
 
         <Route path="/register" element={<Register />} />
 
-        <Route path="/user" element={<UserDashboard />} />
+        <Route path="/admin" element={<AdminLayout />}>
 
-        <Route path="/admin" element={<AdminDashboard />} />
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="approvals" element={<AdminApprovalsPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="api-health" element={<AdminApiHealthPage />} />
+          <Route path="logs" element={<AdminLogsPage />} />
 
+        </Route>
         {/* 🔥 ANALYST ROUTES */}
 
         <Route path="/analyst" element={<AnalystLayout />}>
-
           <Route index element={<AnalystDashboardPage />} />
 
           <Route path="dashboard" element={<AnalystDashboardPage />} />
@@ -71,38 +83,27 @@ export default function App() {
           <Route path="visualization" element={<AnalystVisualizationPage />} />
 
           <Route path="export" element={<AnalystExportPage />} />
-
+          <Route path="assets" element={<AnalystAssetsPage />} />
           {/* PATENT DETAIL PAGE */}
 
           <Route path="patent/:lensId" element={<PatentDetailPage />} />
-
+          {/* <Route path="status-dashboard" element={<AnalystStatusDashboard />} /> */}
           <Route path="profile" element={<Profile />} />
-
         </Route>
 
-
-       
-
-<Route path="/user" element={<UserLayout/>}>
-
-  <Route index element={<UserDashboardPage/>}/>
-  <Route path="dashboard" element={<UserDashboardPage/>}/>
-  <Route path="search" element={<UserSearchPage/>}/>
-  <Route path="watchlist" element={<UserWatchlistPage/>}/>
-  <Route path="history" element={<UserHistoryPage/>}/>
-
-  {/* IMPORTANT */}
-  <Route path="patent/:lensId" element={<UserPatentDetailPage/>}/>
-
-  <Route path="profile" element={<Profile/>}/>
-
-</Route>
+        <Route path="/user" element={<UserLayout />}>
+          <Route index element={<UserDashboardPage />} />
+          <Route path="dashboard" element={<UserDashboardPage />} />
+          <Route path="search" element={<UserSearchPage />} />
+          <Route path="watchlist" element={<UserWatchlistPage />} />
+          <Route path="history" element={<UserHistoryPage />} />
+          <Route path="status-dashboard" element={<UserStatusDashboard />} />
+          <Route path="subscriptions" element={<UserSubscriptionsPage />} />
+          {/* IMPORTANT */}
+          <Route path="patent/:lensId" element={<UserPatentDetailPage />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
       </Routes>
-
-        
-        
-
-
 
       {/* TOAST */}
 
@@ -113,8 +114,6 @@ export default function App() {
         newestOnTop
         pauseOnHover
       />
-
     </>
   );
-
 }

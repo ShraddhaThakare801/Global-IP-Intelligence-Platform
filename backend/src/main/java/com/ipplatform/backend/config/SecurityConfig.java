@@ -40,7 +40,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of("*"));  // 🔥 FIX
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(false);
@@ -72,6 +72,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/reset-password").permitAll()
 
@@ -83,10 +84,18 @@ public class SecurityConfig {
 
                         .requestMatchers("/actuator/health").permitAll()
 
-                        // 🔥 Search + Detail API PUBLIC (for development / anonymous browsing)
+                        // 🔥 Search + Detail API PUBLIC
                         .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/assets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ip-assets/**").permitAll()
+
+                        // 🔥 ADD THIS LINE (YOUR FIX)
+                        .requestMatchers(HttpMethod.GET, "/api/visualization/**").permitAll()
+
+                        // ── Legal Status API ─────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/legal-status/summary").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/legal-status/pipeline").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/legal-status/alerts").hasAnyRole("ANALYST", "ADMIN")
 
                         // ── ROLE_USER ────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/user/logout").hasRole("USER")
@@ -97,7 +106,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/analyst/logout").hasRole("ANALYST")
                         .requestMatchers(HttpMethod.GET, "/api/analyst/me").hasRole("ANALYST")
                         .requestMatchers("/api/subscriptions/**")
-                        .hasAnyRole("ANALYST", "ADMIN")
+                        .hasAnyRole("USER", "ANALYST", "ADMIN")
                         .requestMatchers("/api/notifications/**")
                         .hasAnyRole("ANALYST", "ADMIN")
                         .requestMatchers("/api/landscape/**")
@@ -108,8 +117,8 @@ public class SecurityConfig {
                         // ── ROLE_ADMIN ───────────────────────────────
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                .anyRequest().authenticated()
-            )
+                        .anyRequest().authenticated()
+                )
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
