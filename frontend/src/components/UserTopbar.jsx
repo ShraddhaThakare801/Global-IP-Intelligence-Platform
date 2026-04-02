@@ -5,8 +5,6 @@ export default function UserTopbar(){
 
   const navigate = useNavigate();
 
-  const username = localStorage.getItem("username") || "User";
-  const email = localStorage.getItem("email") || "user@email.com";
 
   const logout = () => {
 
@@ -76,7 +74,6 @@ export default function UserTopbar(){
           font-semibold
           "
           >
-            {username.charAt(0).toUpperCase()}
           </div>
 
 
@@ -84,13 +81,6 @@ export default function UserTopbar(){
 
           <div className="hidden md:block">
 
-            <p className="text-sm font-semibold">
-              {username}
-            </p>
-
-            <p className="text-xs text-gray-400">
-              {email}
-            </p>
 
           </div>
 

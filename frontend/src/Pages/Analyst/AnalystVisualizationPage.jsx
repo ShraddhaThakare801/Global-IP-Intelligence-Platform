@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   BarChart, Bar,
   LineChart, Line,
@@ -14,104 +14,131 @@ import html2canvas from "html2canvas";
 export default function AnalystVisualizationPage() {
 
   const location = useLocation();
-
   const rawData = location.state?.results || [];
-  const trendRaw = location.state?.trendData || {};
-  const citationRaw = location.state?.citationData || {};
-  const familyRaw = location.state?.familyData || {};
 
   const [tool, setTool] = useState("trend");
-  const [view, setView] = useState("top");
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [range, setRange] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
 
-  /* ================= TRANSFORM ================= */
-
-  const trendData = useMemo(() =>
-    Object.entries(trendRaw)
-      .map(([year, count]) => ({ year: Number(year), count }))
-      .sort((a,b)=>a.year-b.year)
-  , [trendRaw]);
-
-  const citationData = useMemo(() =>
-    Object.entries(citationRaw).map(([id, arr]) => ({
-      id,
-      count: arr.length
-    }))
-  , [citationRaw]);
-
-  const familyData = useMemo(() =>
-    Object.entries(familyRaw).map(([id, arr]) => ({
-      id,
-      size: arr.length
-    }))
-  , [familyRaw]);
+  const chartRef = useRef();
 
   /* ================= FILTER ================= */
 
-  const filteredTrend = useMemo(() => {
-    if (range === "all") return trendData;
-    const currentYear = new Date().getFullYear();
-    const limit = range === "5" ? 5 : 10;
-    return trendData.filter(d => d.year >= currentYear - limit);
-  }, [trendData, range]);
+  const filteredData = useMemo(() => {
+    return rawData.filter(p => {
+      const year = new Date(p.datePublished).getFullYear();
 
-  const filteredFamily = familyData.filter(f =>
-    f.id.toLowerCase().includes(search.toLowerCase())
-  );
+      if (yearFilter !== "all" && year !== Number(yearFilter)) return false;
+      if (countryFilter !== "all" && p.jurisdiction !== countryFilter) return false;
 
-  /* ================= DERIVED ================= */
+      return true;
+    });
+  }, [rawData, yearFilter, countryFilter]);
 
-  const topFamilies = [...filteredFamily].sort((a,b)=>b.size-a.size).slice(0,10);
+  /* ================= KPI ================= */
 
-  const growthData = trendData.map((d,i,arr)=>({
-    year: d.year,
-    growth: i === 0 ? 0 : d.count - arr[i-1].count
-  }));
+  const totalPatents = filteredData.length;
 
-  const compareData = trendData.map((d,i)=>({
-    year: d.year,
-    current: d.count,
-    previous: trendData[i-1]?.count || 0
-  }));
+  const uniqueCountries = new Set(filteredData.map(p => p.jurisdiction)).size;
 
-  const familyDistribution = [
-    { name:"Small (1)", value: familyData.filter(f=>f.size === 1).length },
-    { name:"Medium (2-3)", value: familyData.filter(f=>f.size >=2 && f.size<=3).length },
-    { name:"Large (4+)", value: familyData.filter(f=>f.size >=4).length }
-  ];
+  const uniqueApplicants = new Set(
+    filteredData.flatMap(p => p.applicants || [])
+  ).size;
 
-  const totalFamilies = familyData.length;
-  const avgFamilySize = totalFamilies
-    ? (familyData.reduce((a,b)=>a+b.size,0) / totalFamilies).toFixed(1)
+  const latestYear = filteredData.length
+    ? Math.max(...filteredData.map(p => new Date(p.datePublished).getFullYear()))
     : 0;
 
-  const totalCitations = citationData.reduce((a,b)=>a+b.count,0);
+  /* ================= TRANSFORMS ================= */
 
-  const topYear = [...trendData].sort((a,b)=>b.count-a.count)[0];
+  // Trend
+  const trendData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      const year = new Date(p.datePublished).getFullYear();
+      map[year] = (map[year] || 0) + 1;
+    });
+    return Object.entries(map).map(([year, count]) => ({ year, count }));
+  }, [filteredData]);
 
-  const topTable = [...familyData].sort((a,b)=>b.size-a.size).slice(0,5);
+  // Growth
+  const growthData = trendData.map((d,i,arr)=>({
+    year: d.year,
+    growth: i===0 ? 0 : d.count - arr[i-1].count
+  }));
 
-  const smartInsight =
-    `🚀 Peak in ${topYear?.year}. Total families: ${totalFamilies}. Growth observed.`;
+  // Country
+  const countryData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      map[p.jurisdiction] = (map[p.jurisdiction] || 0) + 1;
+    });
+    return Object.entries(map).map(([country, count]) => ({ country, count }));
+  }, [filteredData]);
+
+  // Status
+  const statusData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      map[p.patentStatus] = (map[p.patentStatus] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [filteredData]);
+
+  // Publication Type
+  const typeData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      map[p.publicationType] = (map[p.publicationType] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [filteredData]);
+
+  // Applicants
+  const applicantData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      p.applicants?.forEach(a => {
+        map[a] = (map[a] || 0) + 1;
+      });
+    });
+    return Object.entries(map)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a,b)=>b.count-a.count)
+      .slice(0,5);
+  }, [filteredData]);
+
+  // Inventors
+  const inventorData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      p.inventors?.forEach(i => {
+        map[i] = (map[i] || 0) + 1;
+      });
+    });
+    return Object.entries(map)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a,b)=>b.count-a.count)
+      .slice(0,5);
+  }, [filteredData]);
+
+  // Monthly
+  const monthData = useMemo(() => {
+    const map = {};
+    filteredData.forEach(p => {
+      const d = new Date(p.datePublished);
+      const key = `${d.getFullYear()}-${d.getMonth()+1}`;
+      map[key] = (map[key] || 0) + 1;
+    });
+    return Object.entries(map).map(([month, count]) => ({ month, count }));
+  }, [filteredData]);
 
   const COLORS = ["#6366f1","#10b981","#f59e0b","#ef4444"];
 
-  /* ================= EXPORT ================= */
+  /* ================= DOWNLOAD ================= */
 
-  const exportCSV = () => {
-    const rows = familyData.map(f => `${f.id},${f.size}`).join("\n");
-    const blob = new Blob(["ID,Size\n" + rows]);
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "families.csv";
-    link.click();
-  };
-
-  const exportImage = () => {
-    const chart = document.getElementById("chart");
-    html2canvas(chart).then(canvas => {
+  const downloadChart = () => {
+    html2canvas(chartRef.current).then(canvas => {
       const link = document.createElement("a");
       link.download = "chart.png";
       link.href = canvas.toDataURL();
@@ -119,62 +146,64 @@ export default function AnalystVisualizationPage() {
     });
   };
 
+  /* ================= UI ================= */
+
   return (
+    <div className="min-h-screen p-8 text-white bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] space-y-10">
 
-    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] p-8 text-white space-y-10">
-
-      {/* HEADER */}
-      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">
-        🚀 Ultimate Patent Dashboard
+      <h1 className="text-4xl font-bold text-indigo-400 drop-shadow-[0_0_25px_rgba(99,102,241,0.9)] transition hover:drop-shadow-[0_0_50px_rgba(99,102,241,1)]">
+         Smart Patent Dashboard
       </h1>
 
       {/* KPI */}
       <div className="grid md:grid-cols-4 gap-6">
-        <Card title="Patents" value={rawData.length}/>
-        <Card title="Families" value={totalFamilies}/>
-        <Card title="Avg Size" value={avgFamilySize}/>
-        <Card title="Citations" value={totalCitations}/>
+        <Card title="Total Patents" value={totalPatents}/>
+        <Card title="Countries" value={uniqueCountries}/>
+        <Card title="Applicants" value={uniqueApplicants}/>
+        <Card title="Latest Year" value={latestYear}/>
       </div>
 
-      {/* INSIGHT */}
-      <div className="card hover-glow">
-        {smartInsight}
+      {/* Filters */}
+      <div className="flex gap-4 flex-wrap">
+        <select value={yearFilter} onChange={e=>setYearFilter(e.target.value)}
+          className="input border border-indigo-500/20 hover:border-indigo-500 focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(99,102,241,0.8)] transition">
+          <option value="all">All Years</option>
+          {[...new Set(rawData.map(p => new Date(p.datePublished).getFullYear()))]
+            .map(y => <option key={y}>{y}</option>)}
+        </select>
+
+        <select value={countryFilter} onChange={e=>setCountryFilter(e.target.value)}
+          className="input border border-indigo-500/20 hover:border-indigo-500 focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(99,102,241,0.8)] transition">
+          <option value="all">All Countries</option>
+          {[...new Set(rawData.map(p => p.jurisdiction))]
+            .map(c => <option key={c}>{c}</option>)}
+        </select>
+
+        <button onClick={downloadChart}
+          className="btn shadow-[0_0_10px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,1)] hover:scale-105 transition">
+          ⬇ Download Chart
+        </button>
       </div>
 
-      {/* CONTROLS */}
+      {/* Buttons */}
       <div className="flex flex-wrap gap-3">
-        {["trend","growth","family","distribution","compare","citation"].map(t=>(
-          <button key={t} onClick={()=>setTool(t)} className={`btn ${tool===t?"active":""}`}>
-            {t}
-          </button>
-        ))}
-        <button onClick={exportCSV} className="btn green">CSV</button>
-        {/* <button onClick={exportImage} className="btn purple">Image</button> */}
-        <button onClick={()=>window.location.reload()} className="btn red">Refresh</button>
-      </div>
-
-      {/* SEARCH + RANGE */}
-      <div className="flex flex-wrap gap-4">
-        <input
-          placeholder="🔍 Search patent..."
-          value={search}
-          onChange={(e)=>setSearch(e.target.value)}
-          className="input"
-        />
-
-        {["5","10","all"].map(r=>(
-          <button key={r} onClick={()=>setRange(r)} className={`btn ${range===r?"active":""}`}>
-            {r==="all"?"All":`${r}Y`}
+        {["trend","growth","country","status","type","applicant","inventor","month"].map(t => (
+          <button
+            key={t}
+            onClick={()=>setTool(t)}
+            className={`btn ${tool===t ? "active":""} shadow-[0_0_10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_35px_rgba(99,102,241,1)] hover:scale-105 transition`}
+          >
+            {t.toUpperCase()}
           </button>
         ))}
       </div>
 
-      {/* CHART */}
-      <div id="chart" className="card hover-lift">
+      {/* Chart */}
+      <div ref={chartRef} className="card shadow-[0_0_25px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.9)] transition hover:scale-[1.01]">
 
-        {tool === "trend" && (
+        {tool==="trend" && (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={filteredTrend}>
+            <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3"/>
               <XAxis dataKey="year"/>
               <YAxis/>
@@ -184,7 +213,7 @@ export default function AnalystVisualizationPage() {
           </ResponsiveContainer>
         )}
 
-        {tool === "growth" && (
+        {tool==="growth" && (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={growthData}>
               <XAxis dataKey="year"/>
@@ -195,23 +224,23 @@ export default function AnalystVisualizationPage() {
           </ResponsiveContainer>
         )}
 
-        {tool === "family" && (
+        {tool==="country" && (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={view==="top"?topFamilies:filteredFamily}>
-              <XAxis dataKey="id"/>
+            <BarChart data={countryData}>
+              <XAxis dataKey="country"/>
               <YAxis/>
               <Tooltip/>
-              <Bar dataKey="size" fill="#6366f1" onClick={(d)=>setSelected(d)}/>
+              <Bar dataKey="count" fill="#6366f1"/>
             </BarChart>
           </ResponsiveContainer>
         )}
 
-        {tool === "distribution" && (
+        {tool==="status" && (
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
-              <Pie data={familyDistribution} dataKey="value">
-                {familyDistribution.map((_,i)=>(
-                  <Cell key={i} fill={COLORS[i]} />
+              <Pie data={statusData} dataKey="value">
+                {statusData.map((_,i)=>(
+                  <Cell key={i} fill={COLORS[i%COLORS.length]}/>
                 ))}
               </Pie>
               <Tooltip/><Legend/>
@@ -219,22 +248,23 @@ export default function AnalystVisualizationPage() {
           </ResponsiveContainer>
         )}
 
-        {tool === "compare" && (
+        {tool==="type" && (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={compareData}>
-              <XAxis dataKey="year"/>
-              <YAxis/>
+            <PieChart>
+              <Pie data={typeData} dataKey="value">
+                {typeData.map((_,i)=>(
+                  <Cell key={i} fill={COLORS[i%COLORS.length]}/>
+                ))}
+              </Pie>
               <Tooltip/><Legend/>
-              <Bar dataKey="current" fill="#6366f1"/>
-              <Bar dataKey="previous" fill="#10b981"/>
-            </BarChart>
+            </PieChart>
           </ResponsiveContainer>
         )}
 
-        {tool === "citation" && (
+        {tool==="applicant" && (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={citationData}>
-              <XAxis dataKey="id"/>
+            <BarChart data={applicantData}>
+              <XAxis dataKey="name"/>
               <YAxis/>
               <Tooltip/>
               <Bar dataKey="count" fill="#f59e0b"/>
@@ -242,182 +272,61 @@ export default function AnalystVisualizationPage() {
           </ResponsiveContainer>
         )}
 
+        {tool==="inventor" && (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={inventorData}>
+              <XAxis dataKey="name"/>
+              <YAxis/>
+              <Tooltip/>
+              <Bar dataKey="count" fill="#ef4444"/>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+
+        {tool==="month" && (
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={monthData}>
+              <CartesianGrid strokeDasharray="3 3"/>
+              <XAxis dataKey="month"/>
+              <YAxis/>
+              <Tooltip/>
+              <Line dataKey="count" stroke="#6366f1"/>
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+
       </div>
 
-      {/* TABLE */}
-      <div className="card hover-lift">
-        <h3 className="text-indigo-400 mb-3">Top Families</h3>
-        <table className="w-full text-sm">
-          <tbody>
-            {topTable.map((f,i)=>(
-              <tr key={i} className="border-t border-[#334155] hover:bg-[#0f172a] transition">
-                <td>{f.id}</td>
-                <td>{f.size}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* DRILL */}
-      {selected && (
-        <div className="card hover-glow">
-          Selected: {selected.id} → {selected.size}
-        </div>
-      )}
-
-      {/* STYLES */}
       <style jsx>{`
-  /* 🌌 Background glow blobs */
-  body::before, body::after {
-    content: "";
-    position: fixed;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(99,102,241,0.4), transparent);
-    filter: blur(120px);
-    z-index: 0;
-  }
+        .card {
+          background: rgba(15,23,42,0.6);
+          backdrop-filter: blur(20px);
+          padding:20px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.1);
+        }
 
-  body::before {
-    top: -100px;
-    left: -100px;
-  }
+        .btn {
+          padding:10px 18px;
+          border-radius:10px;
+          background:#1e293b;
+          transition:0.3s;
+        }
 
-  body::after {
-    bottom: -100px;
-    right: -100px;
-    background: radial-gradient(circle, rgba(168,85,247,0.4), transparent);
-  }
+        .btn:hover {
+          background:#6366f1;
+        }
 
-  /* 🧊 Glass Card */
-  .card {
-    background: rgba(15,23,42,0.6);
-    backdrop-filter: blur(20px);
-    padding:22px;
-    border-radius:20px;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow: 
-      0 10px 30px rgba(0,0,0,0.7),
-      inset 0 1px 1px rgba(255,255,255,0.05);
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-  }
+        .btn.active {
+          background:#6366f1;
+        }
 
-  /* 🌈 Animated border */
-  .card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius:20px;
-    padding:1px;
-    background: linear-gradient(120deg,#6366f1,#9333ea,#ec4899);
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: 0.4s;
-  }
-
-  .card:hover::after {
-    opacity: 1;
-  }
-
-  /* 🚀 Floating hover */
-  .hover-lift:hover {
-    transform: translateY(-10px) scale(1.04);
-    box-shadow:
-      0 30px 80px rgba(0,0,0,0.9),
-      0 0 25px rgba(99,102,241,0.4);
-  }
-
-  /* 💡 Glow */
-  .hover-glow:hover {
-    box-shadow:
-      0 0 20px rgba(99,102,241,0.6),
-      0 0 40px rgba(139,92,246,0.6),
-      0 0 60px rgba(168,85,247,0.5);
-  }
-
-  /* 📊 Chart effect */
-  #chart {
-    transition: all 0.4s ease;
-  }
-
-  #chart:hover {
-    transform: scale(1.03);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.9);
-  }
-
-  /* 🎯 Buttons (Neon style) */
-  .btn {
-    padding:9px 16px;
-    border-radius:12px;
-    background: rgba(30,41,59,0.8);
-    border:1px solid rgba(255,255,255,0.1);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-  }
-
-  .btn:hover {
-    transform: translateY(-2px) scale(1.08);
-    background: #6366f1;
-    box-shadow:
-      0 0 10px #6366f1,
-      0 0 25px rgba(99,102,241,0.7);
-  }
-
-  .btn.active {
-    background:#6366f1;
-    box-shadow:0 0 15px #6366f1;
-  }
-
-  .btn.green:hover { background:#10b981; }
-  .btn.purple:hover { background:#9333ea; }
-  .btn.red:hover { background:#ef4444; }
-
-  /* 🔍 Input premium */
-  .input {
-    background: rgba(15,23,42,0.8);
-    padding:10px 14px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    transition: 0.3s;
-  }
-
-  .input:focus {
-    outline:none;
-    border-color:#6366f1;
-    box-shadow:
-      0 0 10px #6366f1,
-      0 0 25px rgba(99,102,241,0.5);
-  }
-
-  /* 🌈 Animated heading */
-  .animate-gradient {
-    background-size:300%;
-    animation: gradientMove 4s linear infinite;
-  }
-
-  @keyframes gradientMove {
-    0% {background-position:0%}
-    100% {background-position:100%}
-  }
-
-  /* 📊 Table */
-  table tr {
-    transition: all 0.3s ease;
-  }
-
-  table tr:hover {
-    background: rgba(99,102,241,0.1);
-    transform: scale(1.02);
-  }
-`}</style>
+        .input {
+          background:#0f172a;
+          padding:10px;
+          border-radius:10px;
+        }
+      `}</style>
 
     </div>
   );
@@ -425,9 +334,9 @@ export default function AnalystVisualizationPage() {
 
 function Card({ title, value }) {
   return (
-    <div className="card hover-lift">
-      <p className="text-gray-400 text-sm">{title}</p>
-      <h2 className="text-xl font-bold text-indigo-400">{value}</h2>
+    <div className="card text-center shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_50px_rgba(99,102,241,1)] hover:scale-105 transition">
+      <p className="text-gray-400">{title}</p>
+      <h2 className="text-2xl font-bold text-indigo-400">{value}</h2>
     </div>
   );
 }
