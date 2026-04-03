@@ -42,7 +42,7 @@ function LoginInner() {
       localStorage.setItem("username", data.username);
       localStorage.setItem("email", data.email);
 
-      toast.success("Google login successful 🚀");
+      toast.success("Google login successful ");
 
       setTimeout(() => {
         if (cleanRole === "ADMIN") navigate("/admin");
@@ -93,7 +93,7 @@ function LoginInner() {
       localStorage.setItem("username", data.username);
       localStorage.setItem("email", data.email);
 
-      toast.success("Login successful 🚀");
+      toast.success("Login successful ");
 
       setTimeout(() => {
         if (cleanRole === "ADMIN") navigate("/admin");
@@ -838,6 +838,9 @@ function LoginInner() {
           background: rgba(0, 229, 255, 0.1);
           transform: translateY(-1px);
           box-shadow: 0 10px 25px rgba(0, 229, 255, 0.2);
+           border-color: #8B5CF6;
+  background: rgba(139, 92, 246, 0.1);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
         }
 
         .google-icon {
@@ -858,7 +861,8 @@ function LoginInner() {
         }
 
         .register-btn {
-          background: none;
+          background: rgba(139, 92, 246, 0.1);
+          box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
           border: none;
           color: #00e5ff;
           font-weight: 600;

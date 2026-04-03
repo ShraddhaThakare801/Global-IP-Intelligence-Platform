@@ -14,12 +14,11 @@ export default function UserPatentDetailPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
 
-  // Check subscription status on mount
   useEffect(() => {
     if (!lensId) return;
     api.get(`/api/subscriptions/${lensId}/status`)
       .then(res => setSubscribed(res.data.subscribed))
-      .catch(() => {}); // silently ignore if token missing / error
+      .catch(() => {});
   }, [lensId]);
 
   const handleSubscribe = async () => {
@@ -34,10 +33,10 @@ export default function UserPatentDetailPage() {
       toast.success("Subscribed successfully!");
     } catch (err) {
       if (err.response?.status === 409) {
-        toast.info("Already subscribed to this patent.");
+        toast.info("Already subscribed.");
         setSubscribed(true);
       } else {
-        toast.error("Failed to subscribe. Please try again.");
+        toast.error("Failed to subscribe.");
       }
     } finally {
       setSubLoading(false);
@@ -51,7 +50,7 @@ export default function UserPatentDetailPage() {
       setSubscribed(false);
       toast.success("Unsubscribed successfully!");
     } catch {
-      toast.error("Failed to unsubscribe. Please try again.");
+      toast.error("Failed to unsubscribe.");
     } finally {
       setSubLoading(false);
     }
@@ -59,247 +58,181 @@ export default function UserPatentDetailPage() {
 
   if (!patent) {
     return (
-      <div className="text-red-400 p-6">
-        Patent data not found.{" "}
-        <button onClick={() => navigate(-1)} className="text-indigo-400 underline">Go back</button>
+      <div className="text-center text-red-400 p-10">
+        Patent not found  
+        <br />
+        <button onClick={() => navigate(-1)} className="text-indigo-400 underline mt-2">
+          Go Back
+        </button>
       </div>
     );
   }
 
   return (
 
-    <div className="space-y-8 text-white">
+    <div className="min-h-screen p-8 text-white bg-gradient-to-br from-black via-slate-900 to-black space-y-10">
 
-      {/* BACK + SUBSCRIBE ROW */}
+      {/* TOP BAR */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
 
-      <div className="flex items-center justify-between flex-wrap gap-4">
-
-        <button
-          onClick={() => navigate(-1)}
-          className="
-          bg-indigo-600
-          px-5
-          py-2
-          rounded-lg
-          hover:bg-indigo-700
-          shadow
-          hover:shadow-indigo-500/40
-          transition
-          "
-        >
+        <button onClick={() => navigate(-1)} className="btn">
           ← Back
         </button>
 
-        {/* Subscribe / Unsubscribe */}
         <button
           onClick={subscribed ? handleUnsubscribe : handleSubscribe}
           disabled={subLoading}
-          className={`
-            px-6 py-2 rounded-lg font-semibold text-sm shadow transition disabled:opacity-50
-            ${subscribed
-              ? "bg-red-600 hover:bg-red-700 hover:shadow-red-500/40"
-              : "bg-green-600 hover:bg-green-700 hover:shadow-green-500/40"
-            }
-          `}
+          className={`btn ${subscribed ? "btn-red" : "btn-green"}`}
         >
-          {subLoading ? "…" : subscribed ? "🔔 Unsubscribe" : "🔔 Subscribe"}
+          {subLoading ? "..." : subscribed ? "🔔 Unsubscribe" : "🔔 Subscribe"}
         </button>
 
       </div>
 
-
       {/* TITLE CARD */}
+      <div className="glass-card">
 
-      <div
-      className="
-      bg-slate-800
-      border border-slate-700
-      p-8
-      rounded-xl
-      shadow-xl
-      hover:shadow-indigo-500/20
-      transition
-      "
-      >
+        <h1 className="title">{patent.title}</h1>
 
-        <h1
-        className="
-        text-2xl
-        font-bold
-        text-indigo-400
-        mb-4
-        "
-        >
-          {patent.title}
-        </h1>
+        <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-400">
 
-        <div className="flex flex-wrap gap-6 text-gray-400 text-sm">
-
-          <p>
-            Patent #: {patent.docNumber}
-          </p>
-
-          <p>
-            Jurisdiction: {patent.jurisdiction}
-          </p>
-
-          <p>
-            Published: {patent.datePublished}
-          </p>
+          <span>📄 {patent.docNumber}</span>
+          <span>🌍 {patent.jurisdiction}</span>
+          <span>📅 {patent.datePublished}</span>
 
         </div>
 
       </div>
 
-
-
-      {/* INFORMATION GRID */}
-
+      {/* INFO GRID */}
       <div className="grid md:grid-cols-2 gap-6">
-
         <Info label="Lens ID" value={patent.lensId}/>
         <Info label="Kind Code" value={patent.kind}/>
         <Info label="Publication Type" value={patent.publicationType}/>
-        <Info label="Legal Status Code" value={patent.legalStatusCode}/>
-
+        <Info label="Legal Status" value={patent.legalStatusCode}/>
       </div>
 
-
-
       {/* APPLICANTS */}
-
       <Section title="Applicants">
-
-        {patent.applicants?.map((a,i)=>(
-          <Tag key={i} text={a}/>
-        ))}
-
+        {patent.applicants?.map((a,i)=>(<Tag key={i} text={a}/>))}
       </Section>
-
-
 
       {/* INVENTORS */}
-
       <Section title="Inventors">
-
-        {patent.inventors?.map((i,index)=>(
-          <Tag key={index} text={i}/>
-        ))}
-
+        {patent.inventors?.map((i,index)=>(<Tag key={index} text={i}/>))}
       </Section>
-
-
 
       {/* ABSTRACT */}
-
       <Section title="Abstract">
-
-        <p className="text-gray-300 leading-relaxed">
-          {patent.abstract}
-        </p>
-
+        <p className="text-gray-300 leading-relaxed">{patent.abstract}</p>
       </Section>
 
+      {/* STYLE */}
+      <style jsx>{`
+
+        .glass-card {
+          background: rgba(30,41,59,0.6);
+          backdrop-filter: blur(25px);
+          padding:25px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.08);
+        }
+
+        .title {
+          font-size:22px;
+          font-weight:bold;
+          color:#818cf8;
+        }
+
+        .btn {
+          padding:10px 20px;
+          border-radius:10px;
+          background:#1e293b;
+          transition:0.3s;
+        }
+
+        .btn:hover {
+          background:#6366f1;
+          transform:scale(1.05);
+        }
+
+        .btn-green {
+          background:#16a34a;
+        }
+
+        .btn-red {
+          background:#dc2626;
+        }
+
+      `}</style>
 
     </div>
 
   );
-
 }
 
+/* INFO */
+function Info({label,value}) {
+  return (
+    <div className="card">
+      <p className="label">{label}</p>
+      <p className="value">{value || "N/A"}</p>
 
-
-/* INFO CARD */
-
-function Info({label,value}){
-
-  return(
-
-    <div
-    className="
-    bg-slate-800
-    border border-slate-700
-    p-6
-    rounded-xl
-    shadow-lg
-    hover:shadow-indigo-500/20
-    transition
-    "
-    >
-
-      <p className="text-gray-400 text-sm">
-        {label}
-      </p>
-
-      <p className="text-white font-semibold mt-1">
-        {value || "N/A"}
-      </p>
-
+      <style jsx>{`
+        .card {
+          background:#020617;
+          padding:15px;
+          border-radius:12px;
+          transition:0.3s;
+        }
+        .card:hover {
+          box-shadow:0 0 20px rgba(99,102,241,0.3);
+        }
+        .label {
+          color:#9ca3af;
+          font-size:12px;
+        }
+        .value {
+          font-weight:600;
+        }
+      `}</style>
     </div>
-
   );
-
 }
-
-
 
 /* SECTION */
-
-function Section({title,children}){
-
-  return(
-
-    <div
-    className="
-    bg-slate-800
-    border border-slate-700
-    p-6
-    rounded-xl
-    shadow-xl
-    hover:shadow-indigo-500/20
-    transition
-    "
-    >
-
-      <h3 className="text-indigo-400 font-semibold mb-4">
-        {title}
-      </h3>
-
+function Section({title,children}) {
+  return (
+    <div className="glass-card">
+      <h3 className="section-title">{title}</h3>
       {children}
 
+      <style jsx>{`
+        .section-title {
+          color:#818cf8;
+          margin-bottom:10px;
+        }
+      `}</style>
     </div>
-
   );
-
 }
 
-
-
 /* TAG */
+function Tag({text}) {
+  return (
+    <span className="tag">{text}
 
-function Tag({text}){
+      <style jsx>{`
+        .tag {
+          display:inline-block;
+          background:#6366f1;
+          padding:5px 12px;
+          border-radius:999px;
+          margin:4px;
+          font-size:12px;
+        }
+      `}</style>
 
-  return(
-
-    <span
-    className="
-    inline-block
-    bg-indigo-600
-    text-white
-    text-sm
-    px-4
-    py-1
-    rounded-full
-    mr-2
-    mb-2
-    shadow
-    hover:bg-indigo-700
-    transition
-    "
-    >
-      {text}
     </span>
-
   );
-
 }

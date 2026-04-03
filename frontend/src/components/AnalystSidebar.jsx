@@ -4,17 +4,17 @@ import {
   Search,
   BarChart3,
   FileDown,
-  User,
-  Activity,
+  User
 } from "lucide-react";
 
 export default function AnalystSidebar() {
+
   const linkStyle = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300
+    `group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300
     ${
       isActive
-        ? "bg-slate-800 text-indigo-400 shadow-lg shadow-indigo-500/20"
-        : "text-gray-400 hover:text-indigo-400 hover:bg-slate-800 hover:shadow-md"
+        ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-400 shadow-lg shadow-indigo-500/20"
+        : "text-gray-400 hover:text-indigo-400 hover:bg-slate-800 hover:translate-x-1"
     }`;
 
   return (
@@ -25,73 +25,97 @@ export default function AnalystSidebar() {
       left-0
       w-64
       h-[calc(100vh-4rem)]
-      bg-slate-950
+      bg-gradient-to-b from-slate-950 to-black
       border-r border-slate-800
       p-6
       shadow-2xl
       overflow-y-auto
       "
     >
-      {/* SIDEBAR TITLE */}
 
-      <h2
-        className="
-        text-2xl
-        font-extrabold
-        mb-10
-        bg-gradient-to-r
-        from-indigo-400
-        to-purple-500
-        bg-clip-text
-        text-transparent
-        tracking-wide
-        drop-shadow-md
-        relative
-        "
-      >
-        Analyst Panel
-        <span
+      {/* TITLE */}
+      <div className="mb-10">
+
+        <h2
           className="
-          absolute
-          left-0
-          -bottom-2
-          w-12
-          h-[3px]
-          bg-indigo-500
-          rounded-full
+          text-2xl font-extrabold
+          bg-gradient-to-r from-indigo-400 to-purple-500
+          bg-clip-text text-transparent
+          tracking-wide
+          relative inline-block
           "
-        ></span>
-      </h2>
+        >
+          Analyst Panel
+        </h2>
 
-      {/* NAVIGATION LINKS */}
+        {/* underline */}
+        <div className="w-12 h-[3px] bg-indigo-500 rounded-full mt-2"></div>
 
-      <div className="space-y-2">
+      </div>
+
+      {/* MENU */}
+      <nav className="flex flex-col gap-2">
+
         <NavLink to="/analyst/dashboard" className={linkStyle}>
-          <LayoutDashboard size={18} />
-          Dashboard
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="active-line"></span>}
+              <LayoutDashboard size={18}/> Dashboard
+            </>
+          )}
         </NavLink>
 
         <NavLink to="/analyst/search" className={linkStyle}>
-          <Search size={18} />
-          Search
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="active-line"></span>}
+              <Search size={18}/> Search
+            </>
+          )}
         </NavLink>
 
         <NavLink to="/analyst/visualization" className={linkStyle}>
-          <BarChart3 size={18} />
-          Visualization
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="active-line"></span>}
+              <BarChart3 size={18}/> Visualization
+            </>
+          )}
         </NavLink>
 
         <NavLink to="/analyst/export" className={linkStyle}>
-          <FileDown size={18} />
-          Export
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="active-line"></span>}
+              <FileDown size={18}/> Export
+            </>
+          )}
         </NavLink>
-
 
         <NavLink to="/analyst/profile" className={linkStyle}>
-          <User size={18} />
-          Profile
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="active-line"></span>}
+              <User size={18}/> Profile
+            </>
+          )}
         </NavLink>
-      </div>
+
+      </nav>
+
+      {/* STYLE */}
+      <style jsx>{`
+        .active-line {
+          position:absolute;
+          left:-6px;
+          top:8px;
+          bottom:8px;
+          width:4px;
+          background:#6366f1;
+          border-radius:4px;
+        }
+      `}</style>
+
     </aside>
   );
 }

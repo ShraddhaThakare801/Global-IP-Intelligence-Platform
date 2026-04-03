@@ -11,183 +11,106 @@ export default function UserDashboardPage() {
     fetchPatents();
   },[]);
 
-
   const fetchPatents = async()=>{
-
     try{
-
-      const res = await api.get(
-        "/api/search",
-        {
-          params:{
-            q:"artificial intelligence",
-            type:"PATENT",
-            page:0,
-            size:20
-          }
+      const res = await api.get("/api/search",{
+        params:{
+          q:"artificial intelligence",
+          type:"PATENT",
+          page:0,
+          size:20
         }
-      );
-
+      });
       setPatents(res.data.results || []);
-
     }catch(err){
       console.error(err);
     }finally{
       setLoading(false);
     }
-
   };
 
-
-  /* KPI */
-
   const total = patents.length;
-
   const active = patents.filter(p=>p.patentStatus==="ACTIVE").length;
-
   const pending = patents.filter(p=>p.patentStatus==="PENDING").length;
-
   const discontinued = patents.filter(p=>p.patentStatus==="DISCONTINUED").length;
-
 
   if(loading){
     return(
-      <div className="text-gray-400 text-lg">
-        Loading dashboard...
+      <div className="flex justify-center items-center h-screen bg-black">
+        <div className="loader"></div>
       </div>
     );
   }
 
-
   return(
 
-    <div className="space-y-10 text-white">
+    <div className="min-h-screen px-6 md:px-10 py-8 text-white bg-gradient-to-br from-black via-slate-900 to-black space-y-12">
 
-
-      {/* TITLE */}
-
-      <h2
-      className="
-      text-3xl
-      font-extrabold
-      bg-gradient-to-r
-      from-indigo-400
-      to-purple-500
-      bg-clip-text
-      text-transparent
-      ">
-        My Patent Dashboard
-      </h2>
-
-
-
-      {/* KPI CARDS */}
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-        <StatCard
-          title="Total Patents"
-          value={total}
-          color="text-indigo-400"
-        />
-
-        <StatCard
-          title="Active"
-          value={active}
-          color="text-green-400"
-        />
-
-        <StatCard
-          title="Pending"
-          value={pending}
-          color="text-yellow-400"
-        />
-
-        <StatCard
-          title="Discontinued"
-          value={discontinued}
-          color="text-red-400"
-        />
-
+      {/* HEADER */}
+      <div className="text-center space-y-3">
+        <h1 className="text-5xl font-extrabold gradient-text tracking-wide">
+          📊 My Patent Dashboard
+        </h1>
+        <p className="text-gray-400 text-lg">
+          Track your innovation portfolio in real-time
+        </p>
       </div>
 
+      {/* KPI */}
+      <div className="grid md:grid-cols-4 gap-6">
+        <StatCard title="Total" value={total} color="text-indigo-400"/>
+        <StatCard title="Active" value={active} color="text-green-400"/>
+        <StatCard title="Pending" value={pending} color="text-yellow-400"/>
+        <StatCard title="Discontinued" value={discontinued} color="text-red-400"/>
+      </div>
 
+      {/* OVERVIEW */}
+      <div className="glass-card animate-fade">
+        <h3 className="section-title">Portfolio Overview</h3>
 
-      {/* PORTFOLIO OVERVIEW */}
-
-      <div
-      className="
-      bg-slate-800
-      border border-slate-700
-      p-6
-      rounded-xl
-      shadow-xl
-      hover:shadow-indigo-500/20
-      transition
-      "
-      >
-
-        <h3 className="text-indigo-400 font-semibold mb-4">
-          Portfolio Overview
-        </h3>
-
-        <p className="text-gray-400">
+        <p className="text-gray-300 leading-relaxed text-lg">
           You currently have
-          <span className="text-white font-semibold"> {total} patents </span>
-          tracked in your portfolio. Monitor status changes,
-          publication updates, and jurisdiction coverage here.
+          <span className="highlight"> {total} patents </span>
+          in your portfolio. Stay updated with
+          <span className="highlight"> status changes </span>,
+          global filings, and innovation trends.
         </p>
 
       </div>
 
+      {/* RECENT */}
+      <div className="glass-card animate-fade">
+        <h3 className="section-title">Recent Patents</h3>
 
-
-      {/* RECENT PATENTS */}
-
-      <div
-      className="
-      bg-slate-800
-      border border-slate-700
-      p-6
-      rounded-xl
-      shadow-xl
-      hover:shadow-indigo-500/20
-      transition
-      "
-      >
-
-        <h3 className="text-indigo-400 font-semibold mb-4">
-          Recent Patents
-        </h3>
-
-        <div className="space-y-4 max-h-80 overflow-y-auto">
+        <div className="space-y-4 max-h-80 overflow-y-auto custom-scroll">
 
           {patents.slice(0,5).map(p=>(
 
-            <div
-              key={p.lensId}
-              className="
-              bg-slate-900
-              p-4
-              rounded-lg
-              border border-slate-700
-              hover:border-indigo-500
-              hover:shadow-lg
-              transition
-              "
-            >
+            <div key={p.lensId} className="patent-card">
 
-              <p className="font-semibold text-white">
-                {p.title}
-              </p>
+              <p className="title line-clamp-2">{p.title}</p>
 
-              <p className="text-sm text-gray-400">
+              <p className="meta">
                 {p.applicants?.[0]} • {p.jurisdiction}
               </p>
 
-              <p className="text-xs text-gray-500">
-                {p.datePublished} • {p.patentStatus}
-              </p>
+              <div className="flex justify-between items-center mt-3">
+
+                <p className="meta-small">
+                  {p.datePublished}
+                </p>
+
+                <span className={`status ${
+                  p.patentStatus === "ACTIVE"
+                    ? "active"
+                    : p.patentStatus === "PENDING"
+                    ? "pending"
+                    : "discontinued"
+                }`}>
+                  {p.patentStatus}
+                </span>
+
+              </div>
 
             </div>
 
@@ -197,9 +120,126 @@ export default function UserDashboardPage() {
 
       </div>
 
+      {/* STYLE */}
+      <style jsx>{`
+
+        .gradient-text {
+          background: linear-gradient(to right,#6366f1,#9333ea,#ec4899);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+          background: rgba(30,41,59,0.65);
+          backdrop-filter: blur(30px);
+          padding:25px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.08);
+          box-shadow:0 10px 40px rgba(0,0,0,0.4);
+          transition:0.3s;
+        }
+
+        .glass-card:hover {
+          transform:translateY(-3px);
+          box-shadow:0 0 60px rgba(99,102,241,0.3);
+        }
+
+        .section-title {
+          color:#818cf8;
+          font-weight:600;
+          margin-bottom:15px;
+          font-size:18px;
+        }
+
+        .highlight {
+          color:#c7d2fe;
+          font-weight:600;
+        }
+
+        .patent-card {
+          padding:16px;
+          border-radius:14px;
+          background:#020617;
+          border:1px solid rgba(255,255,255,0.05);
+          transition:0.3s;
+        }
+
+        .patent-card:hover {
+          transform:translateY(-4px);
+          box-shadow:0 0 30px rgba(99,102,241,0.35);
+        }
+
+        .title {
+          color:#e0e7ff;
+          font-weight:600;
+        }
+
+        .meta {
+          font-size:14px;
+          color:#9ca3af;
+        }
+
+        .meta-small {
+          font-size:12px;
+          color:#6b7280;
+        }
+
+        .status {
+          padding:5px 12px;
+          border-radius:999px;
+          font-size:11px;
+          font-weight:500;
+        }
+
+        .active {
+          background:#10b98120;
+          color:#10b981;
+        }
+
+        .pending {
+          background:#f59e0b20;
+          color:#f59e0b;
+        }
+
+        .discontinued {
+          background:#ef444420;
+          color:#ef4444;
+        }
+
+        .loader {
+          width:50px;
+          height:50px;
+          border:4px solid #6366f1;
+          border-top:transparent;
+          border-radius:50%;
+          animation:spin 1s linear infinite;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+          width:6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background:#6366f1;
+          border-radius:10px;
+        }
+
+        .animate-fade {
+          animation:fade 0.6s ease-in-out;
+        }
+
+        @keyframes fade {
+          from { opacity:0; transform:translateY(10px); }
+          to { opacity:1; transform:translateY(0); }
+        }
+
+        @keyframes spin {
+          to { transform:rotate(360deg); }
+        }
+
+      `}</style>
 
     </div>
 
   );
-
 }

@@ -9,7 +9,6 @@ export default function UserWatchlistPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch subscriptions from real API on mount
   useEffect(() => {
     fetchSubscriptions();
   }, []);
@@ -30,123 +29,82 @@ export default function UserWatchlistPage() {
     try {
       await api.delete(`/api/subscriptions/${lensId}`);
       setSubscriptions(prev => prev.filter(s => s.lensId !== lensId));
-      toast.success("Unsubscribed successfully!");
+      toast.success("Removed from watchlist!");
     } catch {
-      toast.error("Failed to unsubscribe. Please try again.");
+      toast.error("Failed to remove.");
     }
   };
 
   return (
 
-    <div className="space-y-10 text-white">
+    <div className="min-h-screen p-8 text-white bg-gradient-to-br from-black via-slate-900 to-black space-y-10">
 
+      {/* HEADER */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <h1 className="text-4xl font-extrabold gradient-text">
+          ⭐ My Watchlist
+        </h1>
 
-      {/* TITLE */}
-
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="
-        text-3xl
-        font-extrabold
-        bg-gradient-to-r
-        from-indigo-400
-        to-purple-500
-        bg-clip-text
-        text-transparent
-        ">
-          My Watchlist
-        </h2>
-
-        <button
-          onClick={fetchSubscriptions}
-          className="text-sm text-gray-400 hover:text-white border border-gray-600 px-3 py-1 rounded transition"
-        >
+        <button onClick={fetchSubscriptions} className="btn">
           ↻ Refresh
         </button>
       </div>
 
-
       {/* LOADING */}
-
       {loading && (
-        <p className="text-gray-400 animate-pulse">Loading subscriptions…</p>
-      )}
-
-
-      {/* EMPTY STATE */}
-
-      {!loading && subscriptions.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-gray-400 text-lg mb-2">No patents in watchlist.</p>
-          <p className="text-gray-500 text-sm mb-6">
-            Search for a patent, open its details, and click <span className="text-green-400">🔔 Subscribe</span>.
-          </p>
-          <button
-            onClick={() => navigate("/user/search")}
-            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg transition text-sm font-semibold"
-          >
-            Go to Search
-          </button>
+        <div className="flex justify-center items-center h-40">
+          <div className="loader"></div>
         </div>
       )}
 
+      {/* EMPTY */}
+      {!loading && subscriptions.length === 0 && (
+        <div className="glass-card text-center py-16">
 
-      {/* WATCHLIST GRID */}
+          <p className="text-gray-400 text-lg mb-3">
+            No patents in your watchlist
+          </p>
 
+          <p className="text-gray-500 mb-6">
+            Subscribe to patents to track updates
+          </p>
+
+          <button
+            onClick={() => navigate("/user/search")}
+            className="btn glow-indigo"
+          >
+            Go to Search
+          </button>
+
+        </div>
+      )}
+
+      {/* GRID */}
       {!loading && subscriptions.length > 0 && (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
 
           {subscriptions.map(p => (
 
-            <div
-              key={p.lensId}
-              className="
-              bg-slate-800
-              border border-slate-700
-              p-6
-              rounded-xl
-              shadow-xl
-              hover:-translate-y-1
-              hover:shadow-indigo-500/30
-              hover:border-indigo-500
-              transition
-              flex flex-col justify-between
-              "
-            >
+            <div key={p.lensId} className="card">
 
               {/* TITLE */}
-
-              <h3 className="text-indigo-400 font-semibold mb-3 line-clamp-2">
-                {p.title || "Untitled Patent"}
-              </h3>
-
+              <h3 className="title">{p.title || "Untitled Patent"}</h3>
 
               {/* INFO */}
+              <p className="meta">🌍 {p.jurisdiction || "N/A"}</p>
+              <p className="meta">📅 {p.datePub || "N/A"}</p>
 
-              <p className="text-gray-400 text-sm">
-                Jurisdiction: {p.jurisdiction || "N/A"}
-              </p>
-
-              <p className="text-gray-400 text-sm">
-                Published: {p.datePub || "N/A"}
-              </p>
-
-              <p className="text-gray-500 text-sm mb-1">
+              <p className="meta-small">
                 Subscribed:{" "}
                 {p.subscribedAt
-                  ? new Date(p.subscribedAt).toLocaleDateString("en-IN", {
-                      day: "numeric", month: "short", year: "numeric"
-                    })
+                  ? new Date(p.subscribedAt).toLocaleDateString("en-IN")
                   : "N/A"}
               </p>
 
-              <p className="text-xs font-mono text-gray-600 mb-4 truncate">
-                {p.lensId}
-              </p>
-
+              <p className="id">{p.lensId}</p>
 
               {/* ACTIONS */}
-
-              <div className="flex gap-3 mt-auto">
+              <div className="flex gap-3 mt-4">
 
                 <button
                   onClick={() => navigate(`/user/patent/${p.lensId}`, {
@@ -159,36 +117,14 @@ export default function UserWatchlistPage() {
                       }
                     }
                   })}
-                  className="
-                  flex-1
-                  bg-indigo-600
-                  py-2
-                  rounded-lg
-                  hover:bg-indigo-700
-                  shadow
-                  hover:shadow-indigo-500/40
-                  transition
-                  text-sm
-                  font-semibold
-                  "
+                  className="btn glow-indigo flex-1"
                 >
-                  View Details →
+                  View
                 </button>
 
                 <button
                   onClick={() => handleUnsubscribe(p.lensId)}
-                  className="
-                  flex-1
-                  bg-red-600
-                  py-2
-                  rounded-lg
-                  hover:bg-red-700
-                  shadow
-                  hover:shadow-red-500/40
-                  transition
-                  text-sm
-                  font-semibold
-                  "
+                  className="btn glow-red flex-1"
                 >
                   Remove
                 </button>
@@ -202,8 +138,91 @@ export default function UserWatchlistPage() {
         </div>
       )}
 
+      {/* STYLE */}
+      <style jsx>{`
+
+        .gradient-text {
+          background: linear-gradient(to right,#6366f1,#9333ea);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+          background: rgba(30,41,59,0.6);
+          backdrop-filter: blur(25px);
+          padding:25px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.08);
+        }
+
+        .card {
+          background:#020617;
+          padding:20px;
+          border-radius:15px;
+          transition:0.3s;
+        }
+
+        .card:hover {
+          transform:translateY(-5px);
+          box-shadow:0 0 30px rgba(99,102,241,0.4);
+        }
+
+        .title {
+          color:#c7d2fe;
+          font-weight:600;
+          margin-bottom:10px;
+        }
+
+        .meta {
+          font-size:14px;
+          color:#9ca3af;
+        }
+
+        .meta-small {
+          font-size:12px;
+          color:#6b7280;
+        }
+
+        .id {
+          font-size:10px;
+          color:#6b7280;
+          margin-top:5px;
+        }
+
+        .btn {
+          padding:10px;
+          border-radius:10px;
+          background:#1e293b;
+          transition:0.3s;
+        }
+
+        .btn:hover {
+          transform:scale(1.05);
+        }
+
+        .glow-indigo {
+          box-shadow:0 0 10px #6366f1;
+        }
+
+        .glow-red {
+          box-shadow:0 0 10px #ef4444;
+        }
+
+        .loader {
+          width:40px;
+          height:40px;
+          border:4px solid #6366f1;
+          border-top:transparent;
+          border-radius:50%;
+          animation:spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform:rotate(360deg); }
+        }
+
+      `}</style>
+
     </div>
-
   );
-
 }

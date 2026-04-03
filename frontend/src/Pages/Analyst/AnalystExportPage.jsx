@@ -12,23 +12,19 @@ export default function AnalystExportPage() {
   const location = useLocation();
   const assets = location.state?.results || [];
 
-  console.log("DATA RECEIVED:", assets);
-
-  // ❌ No Data Case
   if (!assets.length) {
     return (
-      <div className="min-h-screen bg-[#0b1220] flex items-center justify-center text-white">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center text-white bg-gradient-to-br from-black via-slate-900 to-black">
+        <div className="glass-card text-center p-10">
           <h2 className="text-2xl text-red-400 font-bold">No Data Found</h2>
           <p className="text-gray-400 mt-2">
-            Please go back and search patents first
+            Please search patents first
           </p>
         </div>
       </div>
     );
   }
 
-  // ✅ Format Data
   const formattedData = useMemo(() =>
     assets.map(a => ({
       Title: a.title,
@@ -39,8 +35,6 @@ export default function AnalystExportPage() {
       PublishedDate: a.datePublished
     })),
   [assets]);
-
-  /* ================= EXPORT ================= */
 
   const exportCSV = () => {
     const ws = XLSX.utils.json_to_sheet(formattedData);
@@ -108,121 +102,127 @@ export default function AnalystExportPage() {
     saveAs(blob, "Patent_Report.docx");
   };
 
-  /* ================= UI ================= */
-
   return (
 
-    <div className="min-h-screen bg-[#0b1220] text-white p-8 space-y-10">
+    <div className="min-h-screen p-10 text-white bg-gradient-to-br from-black via-slate-900 to-black space-y-10">
 
       {/* HEADER */}
-      <div className="
-        bg-[#1e293b]
-        p-8
-        rounded-2xl
-        border border-slate-700
-        shadow-lg
-        hover:shadow-indigo-500/20
-        transition
-      ">
-        <h2 className="text-3xl font-bold text-indigo-400">
-          🚀 Patent Export Center
-        </h2>
-
-        <p className="mt-2 text-gray-400">
+      <div className="glass-card text-center">
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+          📦 Export Center
+        </h1>
+        <p className="text-gray-400 mt-2">
           Total Records: {assets.length}
         </p>
       </div>
 
-      {/* EXPORT CARDS */}
+      {/* EXPORT GRID */}
       <div className="grid md:grid-cols-3 gap-8">
 
-        <ExportCard
-          title="CSV Export"
-          desc="Download CSV dataset"
-          action={exportCSV}
-          color="green"
-        />
-
-        <ExportCard
-          title="Excel (.xlsx)"
-          desc="Spreadsheet report"
-          action={exportXLSX}
-          color="emerald"
-        />
-
-        <ExportCard
-          title="PDF Report"
-          desc="Formatted document"
-          action={exportPDF}
-          color="red"
-        />
-
-        <ExportCard
-          title="Word Document"
-          desc="Editable file"
-          action={exportWord}
-          color="blue"
-        />
-
-        <ExportCard
-          title="JSON Dataset"
-          desc="Developer format"
-          action={exportJSON}
-          color="purple"
-        />
+        <ExportCard title="CSV" desc="Download raw CSV file" action={exportCSV} color="green"/>
+        <ExportCard title="Excel" desc="Professional spreadsheet" action={exportXLSX} color="emerald"/>
+        <ExportCard title="PDF" desc="Formatted report" action={exportPDF} color="red"/>
+        <ExportCard title="Word" desc="Editable document" action={exportWord} color="blue"/>
+        <ExportCard title="JSON" desc="Developer format" action={exportJSON} color="purple"/>
 
       </div>
+
+      {/* STYLE */}
+      <style jsx>{`
+
+        .glass-card {
+          background: rgba(30,41,59,0.6);
+          backdrop-filter: blur(25px);
+          padding:25px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.1);
+          box-shadow:0 0 40px rgba(99,102,241,0.2);
+        }
+
+      `}</style>
 
     </div>
   );
 }
 
-/* ================= CARD ================= */
+/* CARD */
 
 function ExportCard({ title, desc, action, color }) {
 
   const colors = {
-    green: "bg-green-500/20 text-green-400",
-    emerald: "bg-emerald-500/20 text-emerald-400",
-    red: "bg-red-500/20 text-red-400",
-    blue: "bg-blue-500/20 text-blue-400",
-    purple: "bg-purple-500/20 text-purple-400"
+    green: "from-green-400 to-green-600",
+    emerald: "from-emerald-400 to-emerald-600",
+    red: "from-red-400 to-red-600",
+    blue: "from-blue-400 to-blue-600",
+    purple: "from-purple-400 to-purple-600"
   };
 
   return (
-    <div className="
-      bg-[#1e293b]
-      border border-slate-700
-      p-6
-      rounded-xl
-      transition-all duration-300
-      hover:-translate-y-2
-      hover:shadow-indigo-500/30
-      cursor-pointer
-    ">
+    <div className="card">
 
-      <h3 className="text-lg font-semibold mb-2 text-indigo-400">
-        {title}
-      </h3>
+      <div className={`icon bg-gradient-to-r ${colors[color]}`}>
+        ⬇
+      </div>
 
-      <p className="text-gray-400 text-sm mb-5">
-        {desc}
-      </p>
+      <h3 className="title">{title} Export</h3>
+      <p className="desc">{desc}</p>
 
-      <button
-        onClick={action}
-        className={`
-          w-full py-2 rounded-lg font-semibold
-          ${colors[color]}
-          transition-all duration-300
-          hover:scale-105
-          hover:shadow-lg
-        `}
-      >
-        ⬇ Download
+      <button onClick={action} className="download-btn">
+        Download
       </button>
+
+      <style jsx>{`
+        .card {
+          background: rgba(15,23,42,0.7);
+          border:1px solid rgba(255,255,255,0.1);
+          padding:25px;
+          border-radius:20px;
+          text-align:center;
+          transition:0.3s;
+        }
+
+        .card:hover {
+          transform:translateY(-10px);
+          box-shadow:0 0 40px rgba(99,102,241,0.5);
+        }
+
+        .icon {
+          width:50px;
+          height:50px;
+          border-radius:12px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin:auto;
+          margin-bottom:15px;
+          font-size:20px;
+        }
+
+        .title {
+          font-weight:bold;
+          color:#818cf8;
+        }
+
+        .desc {
+          font-size:14px;
+          color:#9ca3af;
+          margin:10px 0;
+        }
+
+        .download-btn {
+          width:100%;
+          padding:10px;
+          border-radius:10px;
+          background:#6366f1;
+          transition:0.3s;
+        }
+
+        .download-btn:hover {
+          transform:scale(1.05);
+          box-shadow:0 0 20px #6366f1;
+        }
+      `}</style>
 
     </div>
   );
 }
-

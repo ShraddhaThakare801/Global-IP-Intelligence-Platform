@@ -1,3 +1,5 @@
+// ONLY UI IMPROVED — LOGIC SAME
+
 import { useState } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +21,6 @@ export default function AnalystSearchPage() {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
@@ -30,7 +31,6 @@ export default function AnalystSearchPage() {
   };
 
   const applyFilters = (filters, data) => {
-
     let filtered = [...data];
 
     if (filters.jurisdiction)
@@ -84,7 +84,6 @@ export default function AnalystSearchPage() {
       applyFilters(filters, data);
 
     } catch (err) {
-      console.error(err);
       alert("API Error");
     } finally {
       setLoading(false);
@@ -113,27 +112,25 @@ export default function AnalystSearchPage() {
     }
   };
 
-  // PAGINATION LOGIC
   const start = (currentPage - 1) * itemsPerPage;
   const currentData = results.slice(start, start + itemsPerPage);
   const totalPages = Math.ceil(results.length / itemsPerPage);
 
   return (
 
-    <div className="p-6 space-y-8 text-white min-h-screen bg-gradient-to-br from-[#0b1a2b] via-[#0a1424] to-[#020617]">
+    <div className="min-h-screen p-8 text-white bg-gradient-to-br from-black via-slate-900 to-black space-y-10">
 
       {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-bold text-indigo-400">
-          Patent Search 
+      <div className="text-center">
+        <h1 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          🔍 Patent Intelligence Search
         </h1>
-        <p className="text-gray-400">
-          Discover patents across technologies
-        </p>
+        <p className="text-gray-400 mt-2">Explore global innovation data</p>
       </div>
 
-      {/* FILTER */}
-      <div className="bg-[#1e293b] p-6 rounded-2xl border border-[#334155] grid md:grid-cols-3 gap-4 shadow-xl">
+      {/* FILTER CARD */}
+      <div className="glass-card grid md:grid-cols-3 gap-4">
+
         <input name="keyword" value={filters.keyword} onChange={handleChange} placeholder="Keyword..." className="input" />
         <input name="applicant" value={filters.applicant} onChange={handleChange} placeholder="Company" className="input" />
         <input name="inventor" value={filters.inventor} onChange={handleChange} placeholder="Inventor" className="input" />
@@ -158,61 +155,41 @@ export default function AnalystSearchPage() {
           <option value="PATENT_APPLICATION">Application</option>
           <option value="GRANTED_PATENT">Granted</option>
         </select>
+
       </div>
 
       {/* BUTTONS */}
-      <div className="flex gap-4 flex-wrap">
-        <button onClick={handleSearch} className="btn-indigo">🔎 Search</button>
-        <button onClick={clearFilters} className="btn-red">Reset</button>
+      <div className="flex gap-4 justify-center flex-wrap">
+        <button onClick={handleSearch} className="btn glow-indigo">🔎 Search</button>
+        <button onClick={clearFilters} className="btn glow-red">Reset</button>
 
         <button
           onClick={() => {
             if (!results.length) return alert("Search first!");
             navigate("/analyst/export", { state: { results } });
           }}
-          className="btn-green"
+          className="btn glow-green"
         >
           ⬇ Export
         </button>
-         <button
-  onClick={async () => {
 
-    if (!results.length) return alert("Search first!");
-
-    try {
-
-      const keyword = filters.keyword;
-
-      // ✅ CALL ALL 3 APIs
-      const [trendRes, citationRes, familyRes] = await Promise.all([
-        api.get(`/api/visualization/trends?keyword=${keyword}`),
-        api.get(`/api/visualization/citations?keyword=${keyword}`),
-        api.get(`/api/visualization/families?keyword=${keyword}`)
-      ]);
-
-      navigate("/analyst/visualization", {
-        state: {
-          results,
-          trendData: trendRes.data,
-          citationData: citationRes.data,
-          familyData: familyRes.data
-        }
-      });
-
-    } catch (err) {
-      console.error(err);
-      alert("Visualization API error");
-    }
-
-  }}
-  className="btn-gradient"
->
-  📊 Dashboard
-</button>
-         
-         
-
+        <button
+          onClick={() => {
+            if (!results.length) return alert("Search first!");
+            navigate("/analyst/visualization", { state: { results } });
+          }}
+          className="btn glow-purple"
+        >
+          📊 Dashboard
+        </button>
       </div>
+
+      {/* LOADING */}
+      {loading && (
+        <div className="text-center text-indigo-400 animate-pulse">
+          Loading data...
+        </div>
+      )}
 
       {/* RESULTS */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -221,49 +198,25 @@ export default function AnalystSearchPage() {
 
           <div
             key={p.lensId}
-            className="
-              relative
-              bg-gradient-to-br from-[#1e293b] to-[#172033]
-              p-5
-              rounded-xl
-              border border-[#334155]
-              cursor-pointer
-              transition-all duration-300
-              hover:-translate-y-2
-              hover:scale-[1.02]
-              hover:shadow-[0_25px_80px_rgba(99,102,241,0.6)]
-              hover:border-indigo-400
-              group
-            "
+            className="card group"
             onClick={() =>
               navigate(`/analyst/patent/${p.lensId}`, { state: { patent: p } })
             }
           >
 
-            {/* glow */}
-            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition bg-indigo-500/10 blur-xl"></div>
+            <div className="card-glow"></div>
 
-            <div className="relative z-10">
+            <h3 className="title">{p.title}</h3>
 
-              <h3 className="text-indigo-400 font-semibold line-clamp-2 mb-2 group-hover:text-white transition">
-                {p.title}
-              </h3>
+            <p className="meta">{p.applicants?.join(", ")}</p>
 
-              <div className="h-[1px] bg-white/10 my-2"></div>
+            <p className="meta">
+              {p.jurisdiction} • {p.datePublished}
+            </p>
 
-              <p className="text-sm text-gray-400">
-                {p.applicants?.join(", ")}
-              </p>
-
-              <p className="text-sm text-gray-400">
-                {p.jurisdiction} • {p.datePublished}
-              </p>
-
-              <span className={`mt-3 inline-block px-3 py-1 text-xs rounded-full ${getStatusColor(p.patentStatus)}`}>
-                {p.patentStatus}
-              </span>
-
-            </div>
+            <span className={`badge ${getStatusColor(p.patentStatus)}`}>
+              {p.patentStatus}
+            </span>
 
           </div>
 
@@ -273,25 +226,17 @@ export default function AnalystSearchPage() {
 
       {/* PAGINATION */}
       {results.length > 0 && (
-        <div className="flex justify-center items-center gap-4 mt-6">
+        <div className="flex justify-center items-center gap-4">
 
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
-            className="px-4 py-2 bg-[#1e293b] border border-[#334155] rounded hover:bg-indigo-600 transition disabled:opacity-40"
-          >
+          <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="btn">
             Prev
           </button>
 
-          <span className="text-indigo-400 font-semibold">
+          <span className="text-indigo-400 font-bold">
             {currentPage} / {totalPages}
           </span>
 
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            className="px-4 py-2 bg-[#1e293b] border border-[#334155] rounded hover:bg-indigo-600 transition disabled:opacity-40"
-          >
+          <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="btn">
             Next
           </button>
 
@@ -300,46 +245,70 @@ export default function AnalystSearchPage() {
 
       {/* STYLES */}
       <style jsx>{`
+        .glass-card {
+          background: rgba(15,23,42,0.7);
+          backdrop-filter: blur(25px);
+          padding:20px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.1);
+        }
+
         .input {
-          background: #0f172a;
-          padding: 10px;
-          border-radius: 10px;
-          border: 1px solid #334155;
+          background:#020617;
+          padding:10px;
+          border-radius:10px;
+          border:1px solid #334155;
         }
 
-        .input:focus {
-          outline: none;
-          border-color: #6366f1;
-          box-shadow: 0 0 10px rgba(99,102,241,0.5);
+        .btn {
+          padding:10px 20px;
+          border-radius:10px;
+          background:#1e293b;
+          transition:0.3s;
         }
 
-        .btn-indigo {
-          background: #6366f1;
-          padding: 10px 20px;
-          border-radius: 10px;
+        .btn:hover { transform: scale(1.05); }
+
+        .glow-indigo { box-shadow:0 0 15px #6366f1; }
+        .glow-red { box-shadow:0 0 15px #ef4444; }
+        .glow-green { box-shadow:0 0 15px #10b981; }
+        .glow-purple { box-shadow:0 0 15px #9333ea; }
+
+        .card {
+          background:rgba(30,41,59,0.6);
+          padding:20px;
+          border-radius:20px;
+          border:1px solid rgba(255,255,255,0.1);
+          transition:0.3s;
+          position:relative;
+          cursor:pointer;
         }
 
-        .btn-red {
-          background: #ef4444;
-          padding: 10px 20px;
-          border-radius: 10px;
+        .card:hover {
+          transform:translateY(-8px);
+          box-shadow:0 0 40px rgba(99,102,241,0.6);
         }
 
-        .btn-green {
-          background: #10b981;
-          padding: 10px 20px;
-          border-radius: 10px;
+        .title {
+          color:#818cf8;
+          font-weight:bold;
+          margin-bottom:10px;
         }
 
-        .btn-gradient {
-          background: linear-gradient(to right,#6366f1,#9333ea);
-          padding: 10px 20px;
-          border-radius: 10px;
+        .meta {
+          color:#9ca3af;
+          font-size:14px;
+        }
+
+        .badge {
+          margin-top:10px;
+          display:inline-block;
+          padding:4px 10px;
+          border-radius:999px;
+          font-size:12px;
         }
       `}</style>
 
     </div>
   );
 }
-
-

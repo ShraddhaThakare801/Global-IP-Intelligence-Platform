@@ -16,37 +16,42 @@ export default function AnalystTopbar() {
       z-50
     ">
 
-      {/* LEFT SIDE */}
+      {/* LEFT */}
       <div className="flex items-center gap-6">
 
         <h1 className="
-          text-lg font-extrabold
+          text-lg font-extrabold tracking-wide
           bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500
           bg-clip-text text-transparent
           animate-gradient
         ">
-           Global IP Intelligence Platform
+          Global IP Intelligence Platform
         </h1>
 
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex items-center gap-6">
+      {/* RIGHT */}
+      <div className="flex items-center gap-5">
 
         {/* 🔔 NOTIFICATION */}
-        <div className="
-          relative p-2 rounded-xl
-          bg-slate-800/60 backdrop-blur-md
-          border border-slate-700/50
-          cursor-pointer transition-all duration-300
-          hover:bg-indigo-500/20 hover:scale-110
-          hover:shadow-[0_0_15px_rgba(99,102,241,0.6)]
-        ">
+        <div className="relative group">
 
-          {/* Pulse dot */}
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+          <div className="
+            p-2 rounded-xl
+            bg-slate-800/60 backdrop-blur-md
+            border border-slate-700/50
+            cursor-pointer transition-all duration-300
+            group-hover:bg-indigo-500/20
+            group-hover:scale-110
+            group-hover:shadow-[0_0_20px_rgba(99,102,241,0.6)]
+          ">
 
-          <Bell size={18} className="text-gray-300" />
+            {/* Pulse dot */}
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+
+            <Bell size={18} className="text-gray-300" />
+
+          </div>
 
         </div>
 
@@ -54,26 +59,22 @@ export default function AnalystTopbar() {
         <div
           onClick={() => navigate("/analyst/profile")}
           className="
+          relative flex items-center justify-center
           w-10 h-10 rounded-full
           bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-          flex items-center justify-center
           text-white font-semibold
-          shadow-lg
-          cursor-pointer
+          shadow-lg cursor-pointer
           transition-all duration-300
           hover:scale-110
-          hover:shadow-[0_0_20px_rgba(168,85,247,0.7)]
-          relative
-        "
-        >
+          hover:shadow-[0_0_25px_rgba(168,85,247,0.7)]
+        ">
 
           {/* Glow ring */}
-          <div className="
+          <span className="
             absolute inset-0 rounded-full
             border-2 border-transparent
-            hover:border-indigo-400
-            transition
-          "></div>
+            group-hover:border-indigo-400
+          "></span>
 
           <User size={16}/>
 
@@ -81,17 +82,19 @@ export default function AnalystTopbar() {
 
       </div>
 
-      {/* 🔥 STYLES */}
+      {/* STYLE */}
       <style jsx>{`
+
         .animate-gradient {
           background-size: 300%;
-          animation: gradientMove 5s linear infinite;
+          animation: gradientMove 6s linear infinite;
         }
 
         @keyframes gradientMove {
           0% { background-position: 0% }
           100% { background-position: 100% }
         }
+
       `}</style>
 
     </div>
